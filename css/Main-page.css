@@ -1,0 +1,868 @@
+/* General Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family:
+    "Inter",
+    -apple-system,
+    sans-serif;
+}
+
+body {
+  background: #3b82f6 fixed;
+  min-height: 100vh;
+  padding: 20px;
+  overflow: hidden;
+}
+
+body > * {
+  position: relative;
+  z-index: 10;
+}
+
+/* Header Styling */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: white;
+  margin-bottom: 20px;
+  margin-left: -20px;
+  margin-right: -20px;
+  padding: 10px 20px;
+  max-width: 100%;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+}
+
+.text-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.subtitle {
+  margin-top: 4px;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.month-select {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+/* Month Dropdown Styling */
+.month-select {
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: none;
+  background-color: #60a5fa;
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.month-select:hover {
+  background-color: #2563eb;
+  transform: translateY(-2px);
+}
+
+.month-select:focus {
+  background-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.4);
+  transform: translateY(-2px);
+}
+
+.month-select:active {
+  transform: scale(0.97);
+}
+
+/* Logout Button design */
+.btn-logout {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+  transition: 0.3s ease;
+}
+
+.btn-logout img {
+  width: 20px;
+  height: 20px;
+}
+
+.btn-logout:hover {
+  background-color: #c0392b;
+  transform: translateY(-2px);
+}
+
+.btn-logout:active {
+  transform: scale(0.95);
+}
+
+/* Delete Button design */
+.btn-delete {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  background-color: #b3b3b3;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+  transition: 0.3s ease;
+}
+
+.btn-delete img {
+  width: 20px;
+  height: 20px;
+}
+
+.btn-delete:hover {
+  background-color: gray;
+  transform: translateY(-2px);
+}
+
+.btn-delete:active {
+  transform: scale(0.95);
+}
+
+/* Dashboard Layout */
+.container {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* desktop: 2 columns */
+  gap: 30px;
+}
+
+.left-side,
+.right-side {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Card Styling */
+.card,
+.chart-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 15px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+h3 {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  color: #6b7280;
+  margin-bottom: 10px;
+}
+
+.placeholder {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #111827;
+}
+
+/* Progress Bars (Cash Flow Status) */
+.progress {
+  margin-bottom: 10px;
+}
+
+.progress-label {
+  font-size: 0.75rem;
+  margin-bottom: 4px;
+}
+
+.progress label {
+  font-size: 0.75rem;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.bar {
+  width: 100%;
+  height: 8px;
+  background: #eee;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.expense-bar {
+  display: block;
+  height: 100%;
+  width: 0;
+  background-color: #ff4d4f;
+  transition: width 0.5s;
+}
+
+.saving-bar {
+  display: block;
+  height: 100%;
+  width: 0;
+  background-color: #52c41a;
+  transition: width 0.5s;
+}
+
+/* Lists (Transaction Breakdown) */
+.incomeHeader {
+  font-size: 0.85rem;
+  margin: 15px 0 10px;
+  color: #22c55e;
+}
+
+.expenseHeader {
+  font-size: 0.85rem;
+  margin: 15px 0 10px;
+  color: #ef4444;
+}
+
+.breakdownHeader {
+  font-weight: 800;
+  color: black;
+}
+
+.moHeader {
+  font-weight: 800;
+  color: black;
+}
+
+.color-circle {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 8px;
+}
+
+ul {
+  list-style: none;
+}
+
+li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  padding: 4px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.item-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Expense List button */
+.actions2 {
+  display: flex;
+  justify-content: center;
+}
+
+.btn-list {
+  margin-top: 10px;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s ease;
+  background: #ef4444;
+  appearance: none;
+}
+
+.btn-list:hover {
+  background-color: #db2a2a;
+  transform: translateY(-2px);
+}
+
+.btn-list:active {
+  transform: scale(0.95);
+}
+
+/* Right Side & Action Buttons */
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.btn-change,
+.btn-add {
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.btn-change {
+  background: #10b981;
+}
+
+.btn-add {
+  background: #3b82f6;
+}
+
+.btn-change:hover {
+  background-color: #0f9f6e;
+  transform: translateY(-2px);
+}
+
+.btn-add:hover {
+  background-color: #2563eb;
+  transform: translateY(-2px);
+}
+
+.btn-change:active,
+.btn-add:active {
+  transform: scale(0.95);
+}
+
+/*
+  ========================================
+  
+
+  PIE CHART INSIDE CHART CARD
+
+
+  ========================================
+*/
+.chart-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 15px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.chart-card .chart-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.chart-card .pieChart {
+  width: 250px;
+  height: 250px;
+  border-radius: 50%;
+  background: #e5e7eb;
+  flex-shrink: 0;
+  margin: 0 auto;
+}
+
+/* Pie Chart Legend */
+.chart-card .legend {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0 auto;
+  font-size: 0.85rem;
+  color: #374151;
+}
+
+.chart-card .legend-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 200px;
+}
+
+.chart-card .legend div {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.chart-card .percent {
+  font-weight: 500;
+}
+
+/*
+  ========================================
+  
+
+  BAR CHART INSIDE CHART CARD
+
+
+  ========================================
+*/
+.bar-chart {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 250px;
+  margin-top: 20px;
+  border-left: 2px solid #ccc;
+  border-bottom: 2px solid #ccc;
+  padding: 10px;
+}
+
+.bar-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+}
+
+.bar-container.active-month {
+  transform: scale(1.08);
+  transition: transform 0.3s ease;
+}
+
+.bar-container.active-month .bar-label {
+  font-weight: bold;
+  color: #3b82f6;
+}
+
+.bars-wrapper {
+  display: flex;
+  gap: 5px;
+  align-items: flex-end;
+  height: 100%;
+}
+
+.barchart.savings {
+  background-color: #22c55e;
+}
+
+.barchart.expenses {
+  background-color: #ef4444;
+}
+
+.barchart {
+  width: 15px;
+  border-radius: 6px 6px 0 0;
+  flex-shrink: 0;
+  min-height: 1px;
+  transition: height 0.8s ease-in-out;
+}
+
+.bar-label {
+  font-size: 14px;
+  color: #374151;
+  text-align: center;
+}
+
+.bar-chart-wrapper {
+  width: 100%;
+  display: block;
+}
+
+/*
+  ========================================
+  
+
+  Modal Pop up
+
+
+  ========================================
+*/
+/* Modal background */
+.modal {
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  opacity: 0; /* hidden by default */
+  pointer-events: none; /* prevent clicks when hidden */
+  transition: opacity 0.2s ease;
+}
+
+.modal.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Modal content box */
+.modal-content {
+  background-color: #fff;
+  margin: 5% auto;
+  padding: 20px;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 600px;
+  overflow-x: auto;
+  box-sizing: border-box;
+  max-height: 80vh;
+  overflow-y: hidden;
+  text-align: center;
+  position: relative;
+  z-index: 1001;
+
+  transform: scale(0.8);
+  opacity: 0;
+  transition: all 0.2s ease;
+}
+
+.modal table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: auto;
+}
+
+.modal th,
+.modal td {
+  padding: 8px;
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.modal.show .modal-content {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.modal-content > * {
+  margin-bottom: 15px;
+}
+.modal-content > *:last-child {
+  margin-bottom: 0;
+}
+
+.modal-content label {
+  font-weight: 500;
+  margin-top: 20px;
+  text-align: left;
+}
+
+.modal-content input {
+  width: 100%;
+  padding: 12px 16px;
+  background: rgba(37, 99, 235, 0.2);
+  border: 1px solid rgba(37, 99, 235);
+  border-radius: 8px;
+  color: #111827;
+  font-size: 1rem;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.modal-content input::placeholder {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content input:focus {
+  background: rgba(255, 255, 255, 0.4);
+  border-color: #2563eb;
+}
+
+.modal-content select {
+  width: 100%;
+  padding: 12px 16px;
+  background: rgba(37, 99, 235, 0.2);
+  border: 1px solid rgba(37, 99, 235);
+  border-radius: 8px;
+  color: #111827;
+  font-size: 1rem;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.modal-content select::placeholder {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content select:focus {
+  background: rgba(255, 255, 255, 0.4);
+  border-color: #2563eb;
+}
+
+/* Close button */
+.close {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.submitBtn {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 10px;
+  transition:
+    background-color 0.3s ease,
+    transform 0.2s ease;
+}
+
+.submitBtn:hover {
+  background-color: #0056b3;
+  transform: scale(1.05);
+}
+
+#modalInputs {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+/* Only for Remove button */
+#submitBtn.remove-btn {
+  background-color: #ef4444;
+  color: white;
+  border-radius: 8px;
+  padding: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+#submitBtn.remove-btn:hover {
+  background-color: #db2a2a;
+  transform: translateY(-2px);
+}
+
+#submitBtn.remove-btn:active {
+  transform: scale(0.95);
+}
+
+/* Only for the table */
+#modalInputs table tbody tr {
+  cursor: pointer;
+}
+
+/* Highlight selected row */
+#modalInputs table tbody tr.selected {
+  background-color: #f87171;
+  color: white;
+}
+
+/*
+  ========================================
+  
+
+  MOBILE RESPONSIVE
+
+
+  ========================================
+*/
+@media (max-width: 936px) {
+  header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
+  .header-right {
+    flex-shrink: 0;
+  }
+
+  .container {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding: 0;
+  }
+
+  .left-side,
+  .right-side {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .chart-card {
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .chart-card .chart-content {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .chart-card .legend {
+    align-items: center;
+    text-align: center;
+  }
+
+  .chart-card .pieChart {
+    width: 250px;
+    height: 250px;
+    flex-shrink: 0;
+    margin: 0 auto;
+  }
+
+  .bar-chart-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .bar-chart {
+    min-width: 700px;
+    width: max-content;
+  }
+
+  body,
+  html {
+    overflow-x: hidden;
+  }
+
+  .actions {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: white;
+    padding: 15px;
+    display: flex;
+    justify-content: space-around;
+    gap: 10px;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+  }
+
+  .btn-change,
+  .btn-add {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .dashboard {
+    padding-bottom: 100px;
+  }
+}
+
+@media (max-width: 656px) {
+  .header-left {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .month-select {
+    width: 100%;
+    max-width: 200px;
+    text-align: center;
+  }
+}
+
+/*
+  ========================================
+  
+
+  Smooth intro and transition
+
+
+  ========================================
+*/
+body.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* White gradient overlay */
+body::before {
+  content: "";
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  background: linear-gradient(to top, white 0%, transparent 60%);
+  animation: moveUp 2s ease forwards;
+  pointer-events: none;
+  z-index: 1;
+}
+
+@keyframes moveUp {
+  0% {
+    transform: translateY(50%);
+  }
+  100% {
+    transform: translateY(0%);
+  }
+}
+
+/* Triggered animation */
+body.animate-gradient::before {
+  animation: moveUp 2s ease forwards;
+}
+
+/* Page transition overlay */
+.page-transition {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+
+  background: linear-gradient(to top, white 0%, white 95%, transparent 100%);
+  transform: translateY(100%);
+  transition: transform 0.8s ease-in-out;
+
+  z-index: 9999;
+  pointer-events: none;
+}
+
+/* Active state */
+.page-transition.active {
+  transform: translateY(0);
+}
+
+.page-transition-solid {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+
+  background: white;
+  transform: translateY(100%);
+  transition: transform 0.2s ease-in-out;
+  z-index: 10000;
+  pointer-events: none;
+}
+
+.page-transition-solid.active {
+  transform: translateY(0);
+}

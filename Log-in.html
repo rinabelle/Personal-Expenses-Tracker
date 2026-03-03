@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Log-in | Peso Tracker</title>
+    <link rel="stylesheet" href="css/Log-in.css" />
+    <link rel="icon" type="image/png" href="images/Logo.png" />
+  </head>
+  <body>
+    <main class="logIn-container">
+      <div class="logo">
+        <div class="MyLogo">
+          <img src="images/logo1.png" alt="Peso Tracker Logo">
+        </div>
+        <span class="name">Peso Tracker</span>
+      </div>
+
+      <section class="logIn-box">
+        <div class="text">
+          <h1>Log-in</h1>
+          <p>Enter your credentials to access your account.</p>
+        </div>
+
+        <form class="logInForm" id="logInForm">
+          <input type="email" name="email" placeholder="Email" id="email" required />
+          <input type="password" name="password" placeholder="Password" id="password" required />
+          <button type="submit" class="btn-logIn">Login</button>
+        </form>
+
+        <div class="links">
+          <a onclick="toForgotPassword()">Forgot password?</a>
+          <a onclick="toSignup()">Sign Up</a>
+        </div>
+      </section>
+    </main>
+
+    <div class="page-transition"></div>
+    <div class="page-transition-solid"></div>
+
+    <script src="js/Log-in.js"></script>
+  </body>
+</html>

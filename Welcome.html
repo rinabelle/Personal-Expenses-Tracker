@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome | Peso Tracker</title>
+  <link rel="stylesheet" href="css/welcome.css">
+  <link rel="icon" type="image/png" href="images/Logo.png">
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav>
+    <div class="logo">
+      <div class="MyLogo">
+        <img src="images/logo1.png" alt="Peso Tracker Logo">
+      </div>
+      <span class="name">Peso Tracker</span>
+    </div>
+
+    <ul>
+      <li><a href="Sign-up.html">Sign Up</a></li>
+      <li><a href="Log-in.html" class="login">Login</a></li>
+    </ul>
+  </nav>
+
+  <!-- Main Welcome Content -->
+  <main class="welcome">
+    <section class="WelcomeContent">
+      <h1>Take Control of <span class="spn-intro">Every Peso</span></h1>
+      <p class="intro">
+        Manage your money smarter with our modern tracking tools.
+        The simple, secure way to reach your financial goals.
+      </p>
+      <button class="btn-logIn" onclick="scrollToFeatures()">Get Started</button>
+      <p class="text">
+        Track your expenses, save money, and plan your financial future.
+      </p>
+    </section>
+  </main>
+
+  <!-- Features Section -->
+  <section class="text2" id="features">
+    <div class="intro2">
+      <h2>Everything you need to save</h2>
+      <p>Simple tools designed for the modern Filipino spender.</p>
+    </div>
+
+    <div class="features">
+      <div class="feature">
+        <div class="icon-box cyan" aria-label="Income & Expenses">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+            <path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 1-1 1H5a2 2 0 0 1-2-2V7"></path>
+          </svg>
+        </div>
+        <h3>Track Income & Expenses</h3>
+        <p>Log all your earnings and spending in one place.</p>
+      </div>
+
+      <div class="feature">
+        <div class="icon-box violet" aria-label="Categorize Spending">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+            <path d="M3 17l6-6 4 4 8-8"></path>
+            <path d="M14 7h7v7"></path>
+          </svg>
+        </div>
+        <h3>Categorize Your Spending</h3>
+        <p>See your expenses organized for smarter budgeting.</p>
+      </div>
+
+      <div class="feature">
+        <div class="icon-box cyan" aria-label="Auto Total Balance">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 64 64">
+            <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="48" font-family="Segoe UI, Arial, sans-serif" fill="currentColor">₱</text>
+          </svg>
+        </div>
+        <h3>Auto Total Balance</h3>
+        <p>Always know your current balance instantly.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <div class="footer-logo" aria-label="Peso Tracker Logo">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="footer-icon">
+            <path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 1-1 1H5a2 2 0 0 1-2-2V7"></path>
+          </svg>
+        </div>
+        <h3>Peso Tracker</h3>
+      </div>
+      <div class="footer-description">
+        <p>Track your expenses, save money, and plan your financial future.</p>
+      </div>
+    </div>
+
+    <hr>
+
+    <div class="footer-bottom">
+      <p>© 2026 Peso Tracker. All rights reserved.</p>
+      <div class="footer-links">
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms of Service</a>
+        <a href="#">Contact</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Page transition overlays -->
+  <div class="page-transition"></div>
+  <div class="page-transition-solid"></div>
+
+  <!-- Scripts -->
+  <script>
+    // Smooth scroll to features
+    function scrollToFeatures() {
+      document.getElementById('features').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Show body with transition
+    document.addEventListener('DOMContentLoaded', () => {
+      document.body.classList.add('show');
+    });
+  </script>
+  <script src="js/Welcome.js"></script>
+</body>
+</html>
