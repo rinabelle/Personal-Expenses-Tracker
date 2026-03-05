@@ -1,383 +1,451 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Peso Tracking</title>
-    <link rel="stylesheet" href="css/Main-page.css" />
-    <link rel="icon" type="image/png" href="images/Logo.png" />
-  </head>
-  <body>
-    <header>
-      <div class="header-left">
-        <div class="text-block">
-          <h1>Peso Tracker</h1>
-          <p class="subtitle">
-            Hello, <span id="username"></span> &#183;
-            <span id="current-date"></span>
-          </p>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Peso Tracker</title>
+  <link rel="stylesheet" href="css/Main-page.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    
+</head>
+<body>
+  <!--Headerrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr-->
+  <header class="TopHeader">
+    <div class="headerInner">
+
+      <div class="brand">
+        <div class="brand-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"></path>
+              <path d="M3 5v14a2 2 0 0 0 2 2h16v-5"></path>
+              <path d="M18 12a2 2 0 0 0 0 4h4v-4Z"></path>
+            </svg>
         </div>
 
-        <select id="viewMonth" class="month-select">
-          <option value="present" selected>View Present</option>
-          <option value="vjan">View January</option>
-          <option value="vfeb">View February</option>
-          <option value="vmar">View March</option>
-          <option value="vapr">View April</option>
-          <option value="vmay">View May</option>
-          <option value="vjune">View June</option>
-          <option value="vjuly">View July</option>
-          <option value="vaug">View August</option>
-          <option value="vsep">View September</option>
-          <option value="voct">View October</option>
-          <option value="vnov">View November</option>
-          <option value="vdec">View December</option>
-        </select>
+        <div>
+          <span class="brand-name">Peso Tracker</span>
+          <p class="greeting">Hello, &middot; DATEEEE</p>
+        </div>
       </div>
 
-      <div class="header-right">
-        <button class="btn-logout">
-          <img src="images/logout.png" alt="Logout Icon" />
+      <div class="dropdown">
+        <button class="dropdown-btn" id="dropdown-btn" aria-expanded="false" aria-haspopup="listbox">
+          <span id="drpdwnLabel">View Present</span>
+            <svg class="chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m6 9 6 6 6-6"></path>
+            </svg>
+        </button>
+        
+        <ul class="menu" id="dropdownMenu" role="listbox" hidden>
+          <li class="drpdwn-option active" role="option">Present</li>
+          <li class="drpdwn-option" role="option">Last Week</li>
+          <li class="drpdwn-option" role="option">Last Month</li>
+          <li class="drpdwn-option" role="option">Last 3 Months</li>
+          <li class="drpdwn-option" role="option">This Year</li>
+        </ul>
+      </div>
+
+      <div class="header-actions">
+        <button class="profile-btn" id="openLogout" aria-label="Profile">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="8" r="4"></circle>
+            <path d="M20 21a8 8 0 1 0-16 0"></path>
+          </svg>
         </button>
 
-        <button class="btn-delete">
-          <img src="images/trash-can-solid.png" alt="Delete Icon" />
+        <button class="delete-btn" id="openDelete" aria-label="Delete">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 6h18"></path>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
+            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
         </button>
-      </div>
-    </header>
-
-    <main class="dashboard">
-      <div class="container">
-        <section class="left-side">
-          <article class="card empty">
-            <h3>Monthly Income</h3>
-            <p id="monthly_income"></p>
-          </article>
-
-          <article class="card empty">
-            <h3>Current Balance</h3>
-            <p id="current_balance"></p>
-          </article>
-
-          <article class="card empty">
-            <h3>Cash Flow Status</h3>
-
-            <div class="progress">
-              <p class="progress-label">Expenses</p>
-              <div class="bar">
-                <span class="expense-bar" id="expense-bar"></span>
-              </div>
-            </div>
-
-            <div class="progress">
-              <p class="progress-label">Savings</p>
-              <div class="bar">
-                <span class="saving-bar" id="saving-bar"></span>
-              </div>
-            </div>
-          </article>
-
-          <article class="card empty">
-            <h3>Transaction Breakdown</h3>
-
-            <h4 class="incomeHeader">Income Sources</h4>
-            <ul>
-              <li>
-                <div class="item-left">
-                  <span class="color-circle" style="background: #2d8668"></span>
-                  Salary
-                </div>
-                <span id="salary"></span>
-              </li>
-
-              <li>
-                <div class="item-left">
-                  <span class="color-circle" style="background: #2fa982"></span>
-                  Freelance
-                </div>
-                <span id="freelance"></span>
-              </li>
-
-              <li>
-                <div class="item-left">
-                  <span class="color-circle" style="background: #5ea891"></span>
-                  Net Income (Business)
-                </div>
-                <span id="net_income"></span>
-              </li>
-            </ul>
-
-            <h4 class="expenseHeader">Expense Categories</h4>
-            <ul>
-              <li>
-                <div class="item-left">
-                  <span class="color-circle" style="background: #3270e2"></span>
-                  Rent
-                </div>
-                <span id="Rent"></span>
-              </li>
-
-              <li>
-                <div class="item-left">
-                  <span class="color-circle" style="background: #cc3253"></span>
-                  Food
-                </div>
-                <span id="Food"></span>
-              </li>
-
-              <li>
-                <div class="item-left">
-                  <span class="color-circle" style="background: #03a26a"></span>
-                  Transport
-                </div>
-                <span id="Transport"></span>
-              </li>
-
-              <li>
-                <div class="item-left">
-                  <span class="color-circle" style="background: #b73a71"></span>
-                  Shopping
-                </div>
-                <span id="Shopping"></span>
-              </li>
-
-              <li>
-                <div class="item-left">
-                  <span class="color-circle" style="background: #5546d0"></span>
-                  Bills
-                </div>
-                <span id="Bills"></span>
-              </li>
-
-              <li>
-                <div class="item-left">
-                  <span class="color-circle" style="background: #9c52e1"></span>
-                  Entertainment
-                </div>
-                <span id="Entertainment"></span>
-              </li>
-            </ul>
-
-            <div class="actions2">
-              <button class="btn-list">Expense List</button>
-            </div>
-          </article>
-        </section>
-
-        <section class="right-side">
-          <article class="chart-card">
-            <h3 class="breakdownHeader">Expense Breakdown</h3>
-            <div class="chart-content">
-              <canvas class="pieChart" id="pieChart"></canvas>
-
-              <div class="legend">
-                <div class="legend-item">
-                  <div class="item-left">
-                    <span
-                      class="color-circle"
-                      style="background: #3270e2"
-                    ></span>
-                    <span>Rent</span>
-                  </div>
-                  <span class="percent" id="percent-rent"></span>
-                </div>
-
-                <div class="legend-item">
-                  <div class="item-left">
-                    <span
-                      class="color-circle"
-                      style="background: #cc3253"
-                    ></span>
-                    <span>Food</span>
-                  </div>
-                  <span class="percent" id="percent-food"></span>
-                </div>
-
-                <div class="legend-item">
-                  <div class="item-left">
-                    <span
-                      class="color-circle"
-                      style="background: #03a26a"
-                    ></span>
-                    <span>Transport</span>
-                  </div>
-                  <span class="percent" id="percent-transport"></span>
-                </div>
-
-                <div class="legend-item">
-                  <div class="item-left">
-                    <span
-                      class="color-circle"
-                      style="background: #b73a71"
-                    ></span>
-                    <span>Shopping</span>
-                  </div>
-                  <span class="percent" id="percent-shopping"></span>
-                </div>
-
-                <div class="legend-item">
-                  <div class="item-left">
-                    <span
-                      class="color-circle"
-                      style="background: #5546d0"
-                    ></span>
-                    <span>Bills</span>
-                  </div>
-                  <span class="percent" id="percent-bills"></span>
-                </div>
-
-                <div class="legend-item">
-                  <div class="item-left">
-                    <span
-                      class="color-circle"
-                      style="background: #9c52e1"
-                    ></span>
-                    <span>Entertainment</span>
-                  </div>
-                  <span class="percent" id="percent-entertainment"></span>
-                </div>
-              </div>
-            </div>
-          </article>
-
-          <article class="chart-card">
-            <h3 class="moHeader">Monthly Overview</h3>
-
-            <div class="bar-chart-wrapper">
-              <div class="bar-chart">
-                <!-- January -->
-                <div class="bar-container" data-month="0">
-                  <div class="bars-wrapper">
-                    <div class="barchart savings" style="height: 0%"></div>
-                    <div class="barchart expenses" style="height: 0%"></div>
-                  </div>
-                  <span class="bar-label">January</span>
-                </div>
-
-                <!-- February -->
-                <div class="bar-container" data-month="1">
-                  <div class="bars-wrapper">
-                    <div class="barchart savings" style="height: 0%"></div>
-                    <div class="barchart expenses" style="height: 0%"></div>
-                  </div>
-                  <span class="bar-label">February</span>
-                </div>
-
-                <!-- March -->
-                <div class="bar-container" data-month="2">
-                  <div class="bars-wrapper">
-                    <div class="barchart savings" style="height: 0%"></div>
-                    <div class="barchart expenses" style="height: 0%"></div>
-                  </div>
-                  <span class="bar-label">March</span>
-                </div>
-
-                <!-- April -->
-                <div class="bar-container" data-month="3">
-                  <div class="bars-wrapper">
-                    <div class="barchart savings" style="height: 0%"></div>
-                    <div class="barchart expenses" style="height: 0%"></div>
-                  </div>
-                  <span class="bar-label">April</span>
-                </div>
-
-                <!-- May -->
-                <div class="bar-container" data-month="4">
-                  <div class="bars-wrapper">
-                    <div class="barchart savings" style="height: 0%"></div>
-                    <div class="barchart expenses" style="height: 0%"></div>
-                  </div>
-                  <span class="bar-label">May</span>
-                </div>
-
-                <!-- June -->
-                <div class="bar-container" data-month="5">
-                  <div class="bars-wrapper">
-                    <div class="barchart savings" style="height: 0%"></div>
-                    <div class="barchart expenses" style="height: 0%"></div>
-                  </div>
-                  <span class="bar-label">June</span>
-                </div>
-
-                <!-- July -->
-                <div class="bar-container" data-month="6">
-                  <div class="bars-wrapper">
-                    <div class="barchart savings" style="height: 0%"></div>
-                    <div class="barchart expenses" style="height: 0%"></div>
-                  </div>
-                  <span class="bar-label">July</span>
-                </div>
-
-                <!-- August -->
-                <div class="bar-container" data-month="7">
-                  <div class="bars-wrapper">
-                    <div class="barchart savings" style="height: 0%"></div>
-                    <div class="barchart expenses" style="height: 0%"></div>
-                  </div>
-                  <span class="bar-label">August</span>
-                </div>
-
-                <!-- September -->
-                <div class="bar-container" data-month="8">
-                  <div class="bars-wrapper">
-                    <div class="barchart savings" style="height: 0%"></div>
-                    <div class="barchart expenses" style="height: 0%"></div>
-                  </div>
-                  <span class="bar-label">September</span>
-                </div>
-
-                <!-- October -->
-                <div class="bar-container" data-month="9">
-                  <div class="bars-wrapper">
-                    <div class="barchart savings" style="height: 0%"></div>
-                    <div class="barchart expenses" style="height: 0%"></div>
-                  </div>
-                  <span class="bar-label">October</span>
-                </div>
-
-                <!-- November -->
-                <div class="bar-container" data-month="10">
-                  <div class="bars-wrapper">
-                    <div class="barchart savings" style="height: 0%"></div>
-                    <div class="barchart expenses" style="height: 0%"></div>
-                  </div>
-                  <span class="bar-label">November</span>
-                </div>
-
-                <!-- December -->
-                <div class="bar-container" data-month="11">
-                  <div class="bars-wrapper">
-                    <div class="barchart savings" style="height: 0%"></div>
-                    <div class="barchart expenses" style="height: 0%"></div>
-                  </div>
-                  <span class="bar-label">December</span>
-                </div>
-              </div>
-            </div>
-          </article>
-
-          <div class="actions">
-            <button class="btn-change">Change Income</button>
-            <button class="btn-add">Add Expenses</button>
-          </div>
-        </section>
-      </div>
-    </main>
-
-    <div class="page-transition"></div>
-    <div class="page-transition-solid"></div>
-
-    <div id="popupModal" class="modal">
-      <div class="modal-content">
-        <span class="close">&times;</span>
-        <h2 id="modalTitle">Popup Title</h2>
-        <p id="modalText">This is your popup content.</p>
-        <div id="modalInputs"></div>
-        <button type="button" class="submitBtn" id="submitBtn">Submit</button>
       </div>
     </div>
 
-    <script src="js/chartt.js"></script>
-    <script src="js/Main-page.js"></script>
-  </body>
+  </header>
+
+  <main class="dashboard">
+    <div class="grid-dashboard">
+
+      <!--leftsideeeeeeeeeeeeeeeeeeeeeeeeeeeee-->
+      <section class="leftside">
+
+        <article class="card">
+          <header class="card-header">
+            <h2 class="cardName" id="income">Monthly Income</h2>
+              <svg class="icon-green" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m23 6-9.5 9.5-5-5L1 18"></path>
+                <path d="M17 6h6v6"></path>
+              </svg>
+          </header>
+
+          <p class="card-value">&#8369; </p>
+          <p class="card-date"></p>
+          <hr class="line"/>
+
+          <div class="income-sources">
+            <div>
+              <p class="source-lbl">Salary</p>
+              <p class="sourceValue">&#8369; </p>
+            </div>
+
+            <div>
+              <p class="source-lbl">Freelance</p>
+              <p class="sourceValue">&#8369; </p>
+            </div>
+
+            <div>
+              <p class="source-lbl">Business</p>
+              <p class="sourceValue">&#8369; </p>
+            </div>        
+          </div>
+        </article>
+
+        <article class="card">
+          <header class="card-header">
+            <h2 class="cardName" id="balance">Current Balance</h2>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"></path>
+              <path d="M3 5v14a2 2 0 0 0 2 2h16v-5"></path>
+              <path d="M18 12a2 2 0 0 0 0 4h4v-4Z"></path>
+            </svg>
+          </header>
+
+          <p class="card-value">&#8369;</p>
+          <p class="card-date"></p>
+          <hr class="line"/>
+
+          <div class="progress-row">
+            <div class="progress-track">
+              <div class="progress-fill progress-blue"></div>
+            </div>
+            <span class="progress-lbl">% saved</span>
+          </div>
+        </article>
+
+        <article class="card">
+          <h2 class="cardName" id="cashflow">Cash flow Status</h2>
+        
+          <div class="flow-item">
+            <div class="flow-row">
+              <div class="flow-lbl">
+                <svg class="icon-red" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m23 18-9.5-9.5-5 5L1 6"></path>
+                  <path d="M17 18h6v-6"></path>
+                </svg>
+                <span>Expenses</span>
+              </div>
+                <span class="flow-amount red">&#8369; </span>
+            </div>
+
+            <div class="progress-track">
+              <div class="progress-fill progress-red"> </div>
+            </div>
+            <p class="progress-pct">% of income</p>
+          </div>
+
+          <div class="flow-item">
+            <div class="flow-row">
+              <div class="flow-lbl">
+                <svg class="icon-green" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m23 6-9.5 9.5-5-5L1 18"></path>
+                  <path d="M17 6h6v6"></path>
+                </svg>
+                <span>Savings</span>
+              </div>
+              <span class="flow-amount green"></span>
+            </div>
+            <p class="progress-pct">% of income</p>
+          </div>
+        </article>
+
+        <article class="card">
+          <h2 class="cardName" id="transaction">Transaction Breakdown</h2>
+          <p class="section-lbl green">Income Sources</p>
+
+          <ul class="txn-list">
+            <li class="txn-item">
+              <div class="txnName"><span class="dot dot-green"></span>Salary</div>
+              <span class="txn-amount">&#8369;</span>
+            </li>
+
+            <li class="txn-item">
+              <div class="txnName"><span class="dot dot-green"></span>Freelance</div>
+              <span class="txn-amount">&#8369;</span>
+            </li>
+
+            <li class="txn-item">
+              <div class="txnName"><span class="dot dot-green"></span>Net Income (Business)</div>
+              <span class="txn-amount">&#8369;</span>
+            </li>
+          </ul>
+          <hr class="line"/>
+
+          <p class="section-lbl red">Expense Categories</p>
+          <ul class="txn-list">
+            <li class="txn-item">
+              <div class="txnName"><span class="dot dot-blue"></span>Rent</div>
+              <span class="txn-amount">&#8369; </span>
+            </li>
+            <li class="txn-item">
+              <div class="txnName"><span class="dot dot-red"></span>Food</div>
+              <span class="txn-amount">&#8369; </span>
+            </li>
+            <li class="txn-item">
+              <div class="txnName"><span class="dot dot-green"></span>Transport</div>
+              <span class="txn-amount">&#8369; </span>
+            </li>
+            <li class="txn-item">
+              <div class="txnName"><span class="dot dot-pink"></span>Shopping</div>
+              <span class="txn-amount">&#8369; </span>
+            </li>
+            <li class="txn-item">
+              <div class="txnName"><span class="dot dot-indigo"></span>Bills</div>
+              <span class="txn-amount">&#8369; </span>
+            </li>
+            <li class="txn-item">
+              <div class="txnName"><span class="dot dot-purple"></span>Entertainment</div>
+              <span class="txn-amount">&#8369; </span>
+            </li>
+
+          </ul>
+        </article>
+      </section>
+
+      <!--rightsideeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-->
+      <section class="rightside">
+
+        <article class="card">
+          <h2 class="cardName" id="expense-chart-title">Expense Breakdown</h2>
+          <div class="chart-layout">
+            <figure class="donut-wrap">
+              <div class="donut">
+                <span class="donut-lbl">&#8369;</span>
+              </div>
+            </figure>
+
+            <div class="legend">
+              <div class="legend-item">
+                <span class="dot dot-blue"></span><span>Rent</span>
+                <span class="legend-amount">&#8369;</span>
+              </div>
+
+              <div class="legend-item">
+                <span class="dot dot-red"></span><span>Food</span>
+                <span class="legend-amount">&#8369;</span>
+              </div>
+
+              <div class="legend-item">
+                <span class="dot dot-green"></span><span>Transport</span>
+                <span class="legend-amount">&#8369;</span>
+              </div>
+
+              <div class="legend-item">
+                <span class="dot dot-pink"></span><span>Shopping</span>
+                <span class="legend-amount">&#8369;</span>
+              </div>
+
+              <div class="legend-item">
+                <span class="dot dot-indigo"></span><span>Bills</span>
+                <span class="legend-amount">&#8369;</span>
+              </div>
+
+              <div class="legend-item">
+                <span class="dot dot-blue"></span><span>Entertainment</span>
+                <span class="legend-amount">&#8369;</span>
+              </div>
+
+              <div class="legend-total">
+                <span>Total</span>
+                <span>&#8369;</span>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="card card-grow">
+          <header class="card-header">
+            <h2 class="cardName" id="overview">Monthly Overview</h2>
+            
+            <div class="chart-legend-inline">
+              <span class="dot dot-blue"></span><span>Income</span>
+              <span class="dot dot-red"></span><span>Expenses</span>
+            </div>
+          </header>
+
+          <figure class="bar-chart">
+            <div class="bar-group">
+              <div class="bar-pair">
+                <div class="bar bar-income"></div>
+                <div class="bar bar-expense"></div>
+              </div>
+              <span class="bar-lbl">Jan.</span>
+            </div>
+
+            <div class="bar-group">
+              <div class="bar-pair">
+                <div class="bar bar-income"></div>
+                <div class="bar bar-expense"></div>
+              </div>
+              <span class="bar-lbl">Feb.</span>
+            </div>
+
+            <div class="bar-group">
+              <div class="bar-pair">
+                <div class="bar bar-income"></div>
+                <div class="bar bar-expense"></div>
+              </div>
+              <span class="bar-lbl">Mar.</span>
+            </div>
+
+            <div class="bar-group">
+              <div class="bar-pair">
+                <div class="bar bar-income"></div>
+                <div class="bar bar-expense"></div>
+              </div>
+              <span class="bar-lbl">Apr.</span>
+            </div>
+
+            <div class="bar-group">
+              <div class="bar-pair">
+                <div class="bar bar-income"></div>
+                <div class="bar bar-expense"></div>
+              </div>
+              <span class="bar-lbl">May</span>
+            </div>
+
+            <div class="bar-group">
+              <div class="bar-pair">
+                <div class="bar bar-income"></div>
+                <div class="bar bar-expense"></div>
+              </div>
+              <span class="bar-lbl">June</span>
+            </div>
+
+            <div class="bar-group">
+              <div class="bar-pair">
+                <div class="bar bar-income"></div>
+                <div class="bar bar-expense"></div>
+              </div>
+              <span class="bar-lbl">July</span>
+            </div>
+
+            <div class="bar-group">
+              <div class="bar-pair">
+                <div class="bar bar-income"></div>
+                <div class="bar bar-expense"></div>
+              </div>
+              <span class="bar-lbl">Aug.</span>
+            </div>
+            
+            <div class="bar-group">
+              <div class="bar-pair">
+                <div class="bar bar-income"></div>
+                <div class="bar bar-expense"></div>
+              </div>
+              <span class="bar-lbl">Sept.</span>
+            </div>
+            
+            <div class="bar-group">
+              <div class="bar-pair">
+                <div class="bar bar-income"></div>
+                <div class="bar bar-expense"></div>
+              </div>
+              <span class="bar-lbl">Oct.</span>
+            </div>
+
+            <div class="bar-group">
+              <div class="bar-pair">
+                <div class="bar bar-income"></div>
+                <div class="bar bar-expense"></div>
+              </div>
+              <span class="bar-lbl">Nov.</span>
+            </div>
+
+            <div class="bar-group">
+              <div class="bar-pair">
+                <div class="bar bar-income"></div>
+                <div class="bar bar-expense"></div>
+              </div>
+              <span class="bar-lbl">Dec.</span>
+            </div>
+          </figure>
+        </article>
+
+        <div class="stats-grid" role="region">
+          <article class="card stat-card">
+            <h3 class="stat-lbl" id="stat-daily">Avg Daily</h3>
+            <p class="stat-value white">&#8369;</p>
+            <p class="stat-sub">spending</p>
+          </article>
+
+          <article class="card stat-card">
+            <h3 class="stat-lbl" id="stat-savings">Savings Rate</h3>
+            <p class="stat-value green">%</p>
+            <p class="stat-sub">of income</p>
+          </article>
+
+          <article class="card stat-card">
+            <h3 class="stat-lbl" id="stat-top">Top Expense</h3>
+            <p class="stat-value blue">Rent</p>
+            <p class="stat-sub">&#8369;</p>
+          </article>
+        </div>
+      </section>
+    </div>
+  </main>
+
+    <!-- LOGOUT MODAL -->
+    <div class="modal-overlay" id="logoutModal" hidden>
+      <div class="modal-backdrop"></div>
+
+      <dialog class="modal" open>
+        <div class="modal-icon modal-icon--blue">
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+        </div>
+
+        <h2 class="modal-title">Log Out</h2>
+        <p class="modal-text">Do you want to log out?</p>
+
+        <div class="modal-actions">
+          <button class="modal-btn modal-btn--cancel" id="cancelLogout">Cancel</button>
+          <button class="modal-btn modal-btn--blue" id="confirmLogout">Log Out</button>
+        </div>
+      </dialog>
+    </div>
+
+
+    <!-- DELETE MODAL -->
+    <div class="modal-overlay" id="deleteModal" hidden>
+      <div class="modal-backdrop"></div>
+
+      <dialog class="modal" open>
+        <div class="modal-icon modal-icon--red">
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+        </div>
+
+        <h2 class="modal-title">Delete Account</h2>
+        <p class="modal-text">Do you want to delete your account? This action cannot be undone.</p>
+
+        <div class="modal-actions">
+          <button class="modal-btn modal-btn--cancel" id="cancelDelete">Cancel</button>
+          <button class="modal-btn modal-btn--red" id="confirmDelete">Delete Account</button>
+        </div>
+      </dialog>
+    </div>
+
+
+  <script src="js2/main.js"></script>
+</body>
 </html>

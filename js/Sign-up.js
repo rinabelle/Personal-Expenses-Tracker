@@ -1,15 +1,7 @@
+const signUpForm = document.getElementById("SignUpForm");
 
-// Fade in animation
-document.addEventListener("DOMContentLoaded", () => {
-  document.body.classList.add("show");
-});
-
-document.getElementById("SignUpForm").addEventListener("submit", async function (e) {
+signUpForm.addEventListener("submit", async (e) => {
   e.preventDefault();
-
-  const form = e.target;
-  const submitBtn = form.querySelector("button[type='submit']");
-  submitBtn.disabled = true;
 
   const display_name = document.getElementById("display_name").value;
   const email = document.getElementById("email").value;
@@ -26,16 +18,14 @@ document.getElementById("SignUpForm").addEventListener("submit", async function 
     const data = await response.json();
 
     if (data.status === "success") {
-      alert("Signup successful!");
-      window.location.href = "Mainpage.html";
+      localStorage.setItem("user_id", data.user_id);
+      localStorage.setItem("display_name", data.display_name);
+      window.location.href = "Main-page.html";
     } else {
-      alert("Error: " + data.message);
+      alert(data.message);
     }
-
-  } catch (error) {
-    alert("Something went wrong.");
-    console.error(error);
-  } finally {
-    submitBtn.disabled = false;
+  } catch (err) {
+    console.error(err);
+    alert("Something went wrong. Try again.");
   }
 });
