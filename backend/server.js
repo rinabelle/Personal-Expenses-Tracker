@@ -8,21 +8,32 @@ const crypto = require("crypto");
 const app = express();
 const PORT = 3000;
 
-app.use(cors());
+app.use(cors({
+  origin: "http://127.0.0.1:5500",
+  credentials: true
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // MySQL connection
-const db = mysql.createConnection({
+const db = mysql.createPool({
   host: "localhost",
   user: "root",
   password: "",
-  database: "finance_db" // your database name
+  database: "finance_db",
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
 });
 
-db.connect((err) => {
-  if (err) console.log("Database connection failed:", err);
-  else console.log("Connected to MySQL");
+db.getConnection((err, connection) => {
+  if (err) {
+    console.log("Database connection failed:", err);
+  } else {
+    console.log("Connected to MySQL");
+    connection.release();
+  }
 });
 
 ///////////////////////////
@@ -75,20 +86,37 @@ app.post("/signup", async (req, res) => {
 ///////////////////////////
 // LOGIN
 ///////////////////////////
-app.post("/login", (req, res) => {
+app.post("/login", async (req, res) => {
   const { email, password } = req.body;
-  if (!email || !password) return res.json({ status: "error", message: "Email and password required." });
+
+  if (!email || !password) {
+    return res.json({ status: "error", message: "Email and password required." });
+  }
 
   db.query("SELECT * FROM users WHERE email = ?", [email], async (err, results) => {
-    if (err) return res.json({ status: "error", message: err.message });
-    if (results.length === 0) return res.json({ status: "error", message: "User not found." });
+
+    if (err) {
+      console.error(err);
+      return res.json({ status: "error", message: "Database error" });
+    }
+
+    if (results.length === 0) {
+      return res.json({ status: "error", message: "User not found." });
+    }
 
     const user = results[0];
     const match = await bcrypt.compare(password, user.password);
 
-    if (!match) return res.json({ status: "error", message: "Incorrect password." });
+    if (!match) {
+      return res.json({ status: "error", message: "Incorrect password." });
+    }
 
-    res.json({ status: "success", user_id: user.id, display_name: user.display_name });
+    res.json({
+      status: "success",
+      user_id: user.id,
+      display_name: user.display_name
+    });
+
   });
 });
 
@@ -118,6 +146,8 @@ app.post("/forgot-password", (req, res) => {
   });
 });
 
+
+
 ///////////////////////////
 // INCOME
 ///////////////////////////
@@ -141,6 +171,17 @@ app.get("/income/:user_id", (req, res) => {
     if (err) return res.json({ status: "error", message: err.message });
     res.json({ status: "success", data: results });
   });
+});
+
+app.get("/income", (req, res) => {
+  const userId = req.query.user_id || 1;
+
+  const income = {
+    salary: 20000,
+    freelance: 5000,
+    net_income: 1000,
+  };
+  res.json({ status: "success", ...income });
 });
 
 ///////////////////////////
@@ -169,7 +210,64 @@ app.get("/expenses/:user_id", (req, res) => {
 });
 
 app.get("/", (req, res) => {
-  res.send("Server is running!"); // simple test message
+  res.send("Server is running!");
+});
+
+app.get("/dashboard/:user_id", (req, res) => {
+  const user_id = req.params.user_id;
+
+  const query = `
+    SELECT 
+      u.display_name AS username,
+      i.salary,
+      i.freelance,
+      i.net_income,
+      b.balance
+    FROM users u
+    LEFT JOIN income i ON u.id = i.user_id
+    LEFT JOIN monthly_balance b ON u.id = b.user_id
+    WHERE u.id = ?
+    ORDER BY i.id DESC
+    LIMIT 1
+  `;
+
+  db.query(query, [user_id], (err, result) => {
+    if (err) return res.json({ status: "error", message: err.message });
+
+    if (result.length === 0) {
+      return res.json({
+        username: "",
+        salary: 0,
+        freelance: 0,
+        net_income: 0,
+        balance: 0
+      });
+    }
+
+    res.json(result[0]);
+  });
+});
+
+// GET CURRENT BALANCE
+app.get("/balance/:user_id", (req, res) => {
+  const { user_id } = req.params;
+
+  db.query(
+    "SELECT balance FROM monthly_balance WHERE user_id = ? ORDER BY id DESC LIMIT 1",
+    [user_id],
+    (err, results) => {
+      if (err) return res.json({ status: "error", message: err.message });
+
+      if (results.length === 0) {
+        return res.json({ status: "success", balance: 0 });
+      }
+
+      res.json({
+        status: "success",
+        balance: results[0].balance
+      });
+    }
+  );
 });
 
 ///////////////////////////

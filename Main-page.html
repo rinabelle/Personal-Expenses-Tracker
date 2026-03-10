@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Peso Tracker</title>
+  <script src="js/chart.js"></script>
   <link rel="stylesheet" href="css/Main-page.css">
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -26,19 +27,21 @@
 
         <div>
           <span class="brand-name">Peso Tracker</span>
-          <p class="greeting">Hello, &middot; DATEEEE</p>
+          <p class="greeting">
+            Hello, <span id="username">User</span> &middot; <span id="current-date"></span>
+          </p>
         </div>
       </div>
 
       <div class="dropdown">
-        <button class="dropdown-btn" id="dropdown-btn" aria-expanded="false" aria-haspopup="listbox">
+        <button class="dropdown-btn" id="header-dropdown" aria-expanded="false" aria-haspopup="listbox">
           <span id="drpdwnLabel">View Present</span>
             <svg class="chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="m6 9 6 6 6-6"></path>
             </svg>
         </button>
         
-        <ul class="menu" id="dropdownMenu" role="listbox" hidden>
+        <ul class="menu" id="header-menu" role="listbox" hidden>
           <li class="drpdwn-option active" role="option">Present</li>
           <li class="drpdwn-option" role="option">Last Week</li>
           <li class="drpdwn-option" role="option">Last Month</li>
@@ -82,24 +85,22 @@
               </svg>
           </header>
 
-          <p class="card-value">&#8369; </p>
-          <p class="card-date"></p>
+          <p class="card-value" id="monthly_income">&#8369; 0</p>          <p class="card-date"></p>
           <hr class="line"/>
 
           <div class="income-sources">
             <div>
               <p class="source-lbl">Salary</p>
-              <p class="sourceValue">&#8369; </p>
-            </div>
+              <p class="sourceValue" id="salary">&#8369; 0</p>            </div>
 
             <div>
               <p class="source-lbl">Freelance</p>
-              <p class="sourceValue">&#8369; </p>
+              <p class="sourceValue" id="freelance">&#8369; 0</p>
             </div>
 
             <div>
               <p class="source-lbl">Business</p>
-              <p class="sourceValue">&#8369; </p>
+              <p class="sourceValue" id="net_income">&#8369; 0</p>
             </div>        
           </div>
         </article>
@@ -114,7 +115,7 @@
             </svg>
           </header>
 
-          <p class="card-value">&#8369;</p>
+          <p class="card-value" id="current_balance">&#8369; 0</p>
           <p class="card-date"></p>
           <hr class="line"/>
 
@@ -221,6 +222,7 @@
         <article class="card">
           <h2 class="cardName" id="expense-chart-title">Expense Breakdown</h2>
           <div class="chart-layout">
+            <canvas id="pieChart" width="300" height="300"></canvas>
             <figure class="donut-wrap">
               <div class="donut">
                 <span class="donut-lbl">&#8369;</span>
@@ -394,6 +396,11 @@
             <p class="stat-sub">&#8369;</p>
           </article>
         </div>
+
+        <div class="main-actions">
+          <button class="btn-expenses" id="btn-expenses">Add Expenses</button>
+          <button class="btn-income" id="btn-income">Add Income</button>
+        </div>
       </section>
     </div>
   </main>
@@ -445,7 +452,54 @@
       </dialog>
     </div>
 
+    <!--Add Expenses Modalllll-->
+    <div class="dropdown">
+      <button class="dropdown-btn" id="expenses-dropdown" aria-expanded="false" aria-haspopup="listbox">
+        <span class="dropdown-label">Select</span>
+        <svg class="chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="m6 9 6 6 6-6"></path>
+        </svg>
+      </button>
 
-  <script src="js2/main.js"></script>
+      <ul class="menu" id="expenses-menu" role="listbox" hidden>
+        <li class="drpdwn-option active" role="option">Select</li>
+        <li class="drpdwn-option" role="option">Rent</li>
+        <li class="drpdwn-option" role="option">Food</li>
+        <li class="drpdwn-option" role="option">Transport</li>
+        <li class="drpdwn-option" role="option">Shopping</li>
+        <li class="drpdwn-option" role="option">Bills</li>
+        <li class="drpdwn-option" role="option">Entertainment</li> 
+      </ul>
+
+      <div class="modal-actions">
+        <button class="modal-btn modal-btn--cancel" id="cancelExpenses">Cancel</button>
+        <button class="modal-btn modal-btn--green" id="confirmExpenses">Save</button>
+      </div>
+    </div>
+
+        <!--Add Incomeeeee Modalllll-->
+    <div class="dropdown">
+      <button class="dropdown-btn" id="income-dropdown" aria-expanded="false" aria-haspopup="listbox">
+        <span class="dropdown-label">Select</span>
+        <svg class="chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="m6 9 6 6 6-6"></path>
+        </svg>
+      </button>
+
+      <ul class="menu" id="income-menu" role="listbox" hidden>
+        <li class="drpdwn-option active" role="option">Select</li>
+        <li class="drpdwn-option" role="option">Salary</li>
+        <li class="drpdwn-option" role="option">Freelance</li>
+        <li class="drpdwn-option" role="option">Business</li>
+      </ul>
+
+      <div class="modal-actions">
+        <button class="modal-btn modal-btn--cancel" id="cancelIncome">Cancel</button>
+        <button class="modal-btn modal-btn--green" id="confirmIncome">Save</button>
+      </div>
+    </div>
+
+  <script src="js/chartt.js"></script>
+  <script src="js/main.js"></script>
 </body>
 </html>
