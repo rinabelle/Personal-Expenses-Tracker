@@ -41,43 +41,54 @@ db.getConnection((err, connection) => {
 ///////////////////////////
 app.post("/signup", async (req, res) => {
   try {
-    const { display_name, email, password, current_balance } = req.body;
+    const { display_name, email, password, starting_balance } = req.body;
 
-    if (!display_name || !email || !password || current_balance === undefined) {
+    if (!display_name || !email || !password || starting_balance === undefined || starting_balance.trim() === "") {
       return res.json({ status: "error", message: "All fields are required." });
     }
 
-    // Check if user exists
     db.query("SELECT * FROM users WHERE email = ?", [email], async (err, results) => {
       if (err) return res.json({ status: "error", message: err.message });
       if (results.length > 0) return res.json({ status: "error", message: "Email already exists." });
 
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      // Insert user
       db.query(
-        "INSERT INTO users (display_name, email, password) VALUES (?, ?, ?)",
-        [display_name, email, hashedPassword],
+        "INSERT INTO users (display_name, email, password, starting_balance) VALUES (?, ?, ?, ?)",
+        [display_name, email, hashedPassword, parseFloat(starting_balance)],
         (err, result) => {
+
           if (err) return res.json({ status: "error", message: err.message });
 
           const user_id = result.insertId;
           const now = new Date();
           const month = now.getMonth() + 1;
           const year = now.getFullYear();
+          const date = now.toISOString().split("T")[0];
 
-          // Insert initial balance into monthly_balance
+          // INSERT STARTING BALANCE INTO monthly_balance
           db.query(
             "INSERT INTO monthly_balance (user_id, month, year, balance) VALUES (?, ?, ?, ?)",
-            [user_id, month, year, parseFloat(current_balance)],
-            (err2) => {
-              if (err2) return res.json({ status: "error", message: err2.message });
-              res.json({ status: "success", user_id, display_name });
-            }
+            [user_id, month, year, parseFloat(starting_balance)]
           );
+
+          // INSERT STARTING BALANCE INTO income (so Monthly Income shows it)
+          db.query(
+            "INSERT INTO income (user_id, starting_money, salary, freelance, net_income, income_date) VALUES (?, ?, ?, ?, ?, ?)",
+            [user_id, parseFloat(starting_balance), 0, 0, 0, date]
+          );
+
+          res.json({ 
+            status: "success", 
+            user_id, 
+            display_name, 
+            starting_balance: parseFloat(starting_balance)
+          });
+
         }
       );
     });
+
   } catch (error) {
     res.json({ status: "error", message: error.message });
   }
@@ -219,10 +230,10 @@ app.get("/dashboard/:user_id", (req, res) => {
   const query = `
     SELECT 
       u.display_name AS username,
-      i.salary,
-      i.freelance,
-      i.net_income,
-      b.balance
+      COALESCE(i.salary,0) AS salary,
+      COALESCE(i.freelance,0) AS freelance,
+      COALESCE(i.net_income, u.starting_balance) AS net_income,
+      COALESCE(b.balance, u.starting_balance) AS balance
     FROM users u
     LEFT JOIN income i ON u.id = i.user_id
     LEFT JOIN monthly_balance b ON u.id = b.user_id

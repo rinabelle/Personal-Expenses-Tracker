@@ -79,10 +79,9 @@ html, body {
   color: rgb(202, 200, 200);
 }
 
-  /* Form Section */
   .logInForm {
     display: grid;
-    row-gap: 20px; /* spacing between inputs */
+    row-gap: 20px;
   }
 
   .logInForm input {

@@ -6,6 +6,7 @@
   <title>Peso Tracker</title>
   <script src="js/chart.js"></script>
   <link rel="stylesheet" href="css/Main-page.css">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -85,13 +86,20 @@
               </svg>
           </header>
 
-          <p class="card-value" id="monthly_income">&#8369; 0</p>          <p class="card-date"></p>
+          <p class="card-value" id="monthly_income">&#8369; 0</p>          
+          <p class="card-date"></p>
           <hr class="line"/>
 
           <div class="income-sources">
             <div>
+              <p class="source-lbl">Starting Money</p>
+              <p class="sourceValue" id="starting_money">&#8369; 0</p>            
+            </div>
+
+            <div>
               <p class="source-lbl">Salary</p>
-              <p class="sourceValue" id="salary">&#8369; 0</p>            </div>
+              <p class="sourceValue" id="salary">&#8369; 0</p>            
+            </div>
 
             <div>
               <p class="source-lbl">Freelance</p>
@@ -214,6 +222,12 @@
 
           </ul>
         </article>
+
+        <div class="main-actions">
+          <button class="btn-expenses" id="openExpenses">Add Expenses</button>
+          <button class="btn-income" id="openIncome">Add Income</button>
+        </div>
+
       </section>
 
       <!--rightsideeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-->
@@ -397,10 +411,6 @@
           </article>
         </div>
 
-        <div class="main-actions">
-          <button class="btn-expenses" id="btn-expenses">Add Expenses</button>
-          <button class="btn-income" id="btn-income">Add Income</button>
-        </div>
       </section>
     </div>
   </main>
@@ -452,52 +462,101 @@
       </dialog>
     </div>
 
-    <!--Add Expenses Modalllll-->
-    <div class="dropdown">
-      <button class="dropdown-btn" id="expenses-dropdown" aria-expanded="false" aria-haspopup="listbox">
-        <span class="dropdown-label">Select</span>
-        <svg class="chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="m6 9 6 6 6-6"></path>
-        </svg>
-      </button>
+   <!--Add Expenses Modalllll-->
+      <section id="expenseModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="expense-title" hidden>
+        <div class="modal-backdrop"></div>
 
-      <ul class="menu" id="expenses-menu" role="listbox" hidden>
-        <li class="drpdwn-option active" role="option">Select</li>
-        <li class="drpdwn-option" role="option">Rent</li>
-        <li class="drpdwn-option" role="option">Food</li>
-        <li class="drpdwn-option" role="option">Transport</li>
-        <li class="drpdwn-option" role="option">Shopping</li>
-        <li class="drpdwn-option" role="option">Bills</li>
-        <li class="drpdwn-option" role="option">Entertainment</li> 
-      </ul>
+        <div class="modal">
 
-      <div class="modal-actions">
-        <button class="modal-btn modal-btn--cancel" id="cancelExpenses">Cancel</button>
-        <button class="modal-btn modal-btn--green" id="confirmExpenses">Save</button>
-      </div>
-    </div>
+          <header class="modal-header">
+            <h2 id="expense-title" class="modal-title">Add Expense</h2>
+          </header>
 
-        <!--Add Incomeeeee Modalllll-->
-    <div class="dropdown">
-      <button class="dropdown-btn" id="income-dropdown" aria-expanded="false" aria-haspopup="listbox">
-        <span class="dropdown-label">Select</span>
-        <svg class="chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="m6 9 6 6 6-6"></path>
-        </svg>
-      </button>
+          <form class="modal-body">
 
-      <ul class="menu" id="income-menu" role="listbox" hidden>
-        <li class="drpdwn-option active" role="option">Select</li>
-        <li class="drpdwn-option" role="option">Salary</li>
-        <li class="drpdwn-option" role="option">Freelance</li>
-        <li class="drpdwn-option" role="option">Business</li>
-      </ul>
+            <div class="form-group">
+              <div class="drpdown">
+                <label for="expenses-dropdown">Expense Category</label>
 
-      <div class="modal-actions">
-        <button class="modal-btn modal-btn--cancel" id="cancelIncome">Cancel</button>
-        <button class="modal-btn modal-btn--green" id="confirmIncome">Save</button>
-      </div>
-    </div>
+                <button class="dropdown-btn" id="expenses-dropdown" aria-expanded="false" aria-haspopup="listbox">
+                  <span class="dropdown-label">Select category</span>
+
+                  <svg class="chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="m6 9 6 6 6-6"></path>
+                  </svg>
+                </button>
+
+                <ul class="menu" id="expenses-menu" role="listbox" hidden>
+                  <li class="drpdwn-option active" role="option">Select</li>
+                  <li class="drpdwn-option" role="option">Rent</li>
+                  <li class="drpdwn-option" role="option">Food</li>
+                  <li class="drpdwn-option" role="option">Transport</li>
+                  <li class="drpdwn-option" role="option">Shopping</li>
+                  <li class="drpdwn-option" role="option">Bills</li>
+                  <li class="drpdwn-option" role="option">Entertainment</li>
+                </ul>
+              </div>
+
+              <div class="form-amount">
+                <label for="expense-amount">Amount</label>
+                <input type="number" id="expense-amount" placeholder="Enter amount">
+              </div>
+            </div>
+
+            <footer class="modal-actions">
+              <button type="button" class="modal-btn modal-btn--cancel" id="cancelExpense">Cancel</button>
+              <button type="submit" class="modal-btn modal-btn--blue" id="saveExpense">Save</button>
+            </footer>
+
+          </form>
+        </div>
+      </section>
+
+
+      <!-- ADD INCOME MODAL -->
+      <section id="incomeModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="income-title" hidden>
+        <div class="modal-backdrop"></div>
+
+        <div class="modal">
+
+          <header class="modal-header">
+            <h2 id="income-title" class="modal-title">Add Income</h2>
+          </header>
+
+          <form class="modal-body">
+
+            <div class="form-group">
+              <label for="income-dropdown">Income Type</label>
+
+              <div class="drpdown">
+                <button id="income-dropdown" class="dropdown-btn" aria-expanded="false" aria-haspopup="listbox">
+                  <span class="dropdown-label">Select type</span>
+
+                  <svg class="chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="m6 9 6 6 6-6"></path>
+                  </svg>
+                </button>
+
+                <ul id="income-menu" class="menu" role="listbox" hidden>
+                  <li role="option">Salary</li>
+                  <li role="option">Freelance</li>
+                  <li role="option">Business</li>
+                </ul>
+              </div>
+              <div class="form-amount">
+                <label for="income-amount">Amount</label>
+                <input type="number" id="income-amount" placeholder="Enter amount">
+              </div>
+            </div>
+
+            <footer class="modal-actions">
+              <button type="button" class="modal-btn modal-btn--cancel" id="cancelIncome">Cancel</button>
+              <button type="submit" class="modal-btn modal-btn--blue" id="saveIncome">Save</button>
+            </footer>
+
+          </form>
+        </div>
+      </section>
 
   <script src="js/chartt.js"></script>
   <script src="js/main.js"></script>

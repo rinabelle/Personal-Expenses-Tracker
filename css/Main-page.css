@@ -220,7 +220,7 @@ html, body {
   margin: 0.75rem 0;
   background: none;
 }
-/* Income sources row */
+
 .income-sources {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -334,6 +334,54 @@ html, body {
 .icon-green { color: var(--green); }
 .icon-blue  { color: var(--blue-light); }
 .icon-red   { color: var(--red); }
+
+/* ── Main Action Buttons ── */
+.main-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+  justify-content: center;
+}
+
+.main-actions .btn-expenses,
+.main-actions .btn-income {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+}
+
+/* Income Button (Blue) */
+.btn-income {
+  background: var(--blue);
+  color: #fff;
+}
+
+.btn-income:hover {
+  background: var(--blue-light);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5);
+}
+
+/* Expenses Button (Green) */
+.btn-expenses {
+  background: var(--green);
+  color: #fff;
+}
+
+.btn-expenses:hover {
+  background: #16A34A; /* slightly darker green */
+  box-shadow: 0 6px 20px rgba(22, 163, 74, 0.5);
+}
+
 /* ── Expense Breakdown Chart ── */
 .chart-layout {
   display: grid;
@@ -495,7 +543,7 @@ html, body {
   background: #0A1628;
   border: 1px solid rgba(37, 99, 235, 0.3);
   border-radius: 16px;
-  padding: 1.5rem;
+  padding: 30px 25px;
   width: 100%;
   max-width: 380px;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
@@ -503,6 +551,40 @@ html, body {
   text-align: center;
   animation: modalIn 0.2s ease-out;
 }
+.modal-header .modal-title{
+font-size: 1.6rem;
+padding-bottom: 18px;
+}
+
+.form-group {
+  display: grid;
+  grid-template-columns: 1fr; 
+  gap: 5px;
+  text-align: left;
+  margin: 0;
+  padding: 0;
+}
+.form-group label {
+  display: block;
+  padding-bottom: 10px;
+  color: rgb(181, 214, 245);
+}
+
+.dropdown-btn, 
+.form-amount input {
+  width: 100%;
+  display: block;
+  padding: 15px;
+  box-sizing: border-box;
+  margin-bottom: 15px;
+}
+
+.form-amount input{
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(0,0,0,0.2);
+  border-radius: 8px;
+}
+
 /* Delete modal red border */
 #deleteModal .modal {
   border-color: rgba(239, 68, 68, 0.3);
@@ -570,6 +652,7 @@ html, body {
   border: none;
   transition: background 0.2s, color 0.2s;
 }
+
 .modal-btn--cancel {
   background: rgba(37, 99, 235, 0.08);
   border: 1px solid rgba(37, 99, 235, 0.25);

@@ -6,7 +6,7 @@ signUpForm.addEventListener("submit", async (e) => {
   const display_name = document.getElementById("display_name").value;
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
-  const current_balance = document.getElementById("current_balance").value;
+  const starting_balance = document.getElementById("starting_balance").value;
 
   try {
     const response = await fetch("http://localhost:3000/signup", {
@@ -18,7 +18,7 @@ signUpForm.addEventListener("submit", async (e) => {
         display_name,
         email,
         password,
-        current_balance
+        starting_balance
       })
     });
 
@@ -27,6 +27,7 @@ signUpForm.addEventListener("submit", async (e) => {
     if (data.status === "success") {
       localStorage.setItem("user_id", data.user_id);
       localStorage.setItem("display_name", data.display_name);
+      localStorage.setItem("starting_money", data.starting_balance);
 
       window.location.href = "Main-page.html";
     } else {
