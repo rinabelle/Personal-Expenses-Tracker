@@ -14,7 +14,12 @@
   --green:       #22C55E;
   --red:         #EF4444;
   --pink:        #EC4899;
+/* Graph*/
   --indigo:      #6366F1;
+  --emerald:     #10B981;
+  --rose:        #F472B6;
+  --yellow:      #ffcc00;
+  --orange:      #F59E0B;
   --purple:      #A855F7;
 }
 html, body {
@@ -81,25 +86,25 @@ html, body {
   margin-top: 1px;
 }
 /* Dropdown */
-.dropdown {
-  position: relative;
-  justify-self: center;
-}
-.dropdown-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: var(--bg-card);
-  border: 1px solid rgba(37,99,235,0.35);
-  color: var(--text);
-  font-family: inherit;
-  font-size: 0.85rem;
-  font-weight: 500;
-  padding: 0.45rem 1rem;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: border-color 0.2s;
-}
+  .dropdown {
+    position: relative;
+    justify-self: center;
+  }
+  .dropdown-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--bg-card);
+    border: 1px solid rgba(37,99,235,0.35);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 0.45rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
 .dropdown-btn:hover { border-color: rgba(59,130,246,0.6); }
 .chevron {
   color: var(--blue-light);
@@ -128,7 +133,7 @@ html, body {
 }
 .drpdwn-option:hover { background: rgba(37,99,235,0.15); color: #fff; }
 .drpdwn-option.active { background: rgba(37,99,235,0.18); color: var(--blue-light); }
-/* Header actions */
+
 .header-actions {
   display: flex;
   align-items: center;
@@ -324,18 +329,19 @@ html, body {
   border-radius: 50%;
   flex-shrink: 0;
 }
-.dot-blue   { background: var(--blue-light); }
-.dot-red    { background: var(--red); }
-.dot-green  { background: var(--green); }
-.dot-pink   { background: var(--pink); }
-.dot-indigo { background: var(--indigo); }
+.dot-indigo   { background: var(--indigo); }
+.dot-rose    { background: var(--rose); }
+.dot-emerald  { background: var(--emerald); }
+.dot-yellow   { background: var(--yellow); }
+.dot-orange { background: var(--orange); }
 .dot-purple { background: var(--purple); }
 /* Icons */
 .icon-green { color: var(--green); }
 .icon-blue  { color: var(--blue-light); }
 .icon-red   { color: var(--red); }
 
-/* ── Main Action Buttons ── */
+
+
 .main-actions {
   display: flex;
   gap: 1rem;
@@ -388,21 +394,17 @@ html, body {
   grid-template-columns: auto 1fr;
   align-items: center;
   gap: 1.5rem;
-  margin-top: 0.5rem;
+  margin: 1.3rem;
 }
+
+
 .donut-wrap { margin: 0; }
 .donut {
   width: 160px;
   height: 160px;
+  padding-right: 12px;
   border-radius: 50%;
-  background: conic-gradient(
-    #3B82F6 0%    33%,
-    #EF4444 33%   57%,
-    #22C55E 57%   68%,
-    #EC4899 68%   79%,
-    #6366F1 79%   93%,
-    #A855F7 93%   100%
-  );
+  background: conic-gradient(white);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -427,7 +429,8 @@ html, body {
 .legend-item {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 5px;
+  padding: 0.2rem;
   font-size: 0.82rem;
   color: rgba(255,255,255,0.8);
 }
@@ -538,54 +541,88 @@ html, body {
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(4px);
 }
-.modal {
-  position: relative;
-  background: #0A1628;
-  border: 1px solid rgba(37, 99, 235, 0.3);
-  border-radius: 16px;
-  padding: 30px 25px;
-  width: 100%;
-  max-width: 380px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-  color: #fff;
-  text-align: center;
-  animation: modalIn 0.2s ease-out;
-}
-.modal-header .modal-title{
-font-size: 1.6rem;
-padding-bottom: 18px;
-}
+    .modal {
+      position: relative;
+      background: #0A1628;
+      border: 1px solid rgba(37, 99, 235, 0.3);
+      border-radius: 16px;
+      padding: 30px 25px;
+      width: 100%;
+      max-width: 380px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+      color: #fff;
+      text-align: center;
+      animation: modalIn 0.2s ease-out;
+    }
+    .modal-header .modal-title{
+    font-size: 1.6rem;
+    padding-bottom: 18px;
+    }
 
-.form-group {
-  display: grid;
-  grid-template-columns: 1fr; 
-  gap: 5px;
-  text-align: left;
-  margin: 0;
-  padding: 0;
-}
-.form-group label {
-  display: block;
-  padding-bottom: 10px;
-  color: rgb(181, 214, 245);
-}
+    .form-group {
+      display: grid;
+      grid-template-columns: 1fr; 
+      gap: 5px;
+      text-align: left;
+      margin: 0;
+      padding: 0;
+    }
+    .form-group label {
+      display: block;
+      padding-bottom: 10px;
+      color: rgb(181, 214, 245);
+    }
+    .drpdown {
+      position: relative;
+      width: 100%;
+      z-index: 10;
+    }
 
-.dropdown-btn, 
-.form-amount input {
-  width: 100%;
-  display: block;
-  padding: 15px;
-  box-sizing: border-box;
-  margin-bottom: 15px;
-}
+    #expenses-menu, #income-menu {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      width: 100%;
+      z-index: 1000;
+      margin-top: 4px;
+    }
 
-.form-amount input{
-  background: rgba(255,255,255,0.15);
-  border: 1px solid rgba(0,0,0,0.2);
-  border-radius: 8px;
-}
+    .drpdwnBtn, 
+    .form-amount input {
+      width: 100%;
+      padding: 15px;
+      box-sizing: border-box;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      display: block;
+      margin-bottom: 15px;
+      border: 1px solid rgba(37,99,235,0.35);
+      transition: border-color 0.2s;
+    }
 
-/* Delete modal red border */
+    .form-amount input {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(0, 0, 0, 0.2);
+    }
+
+    .drpdwnBtn {
+      display: block;
+      background: var(--bg-card);
+      color: var(--text);
+      cursor: pointer;
+      align-items: flex-start;
+      font-size: 15px;
+      padding: 12px;
+    }
+
+    .drpdwnBtn:hover { border-color: rgba(59,130,246,0.6); }
+
+    .form-amount input{
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(0,0,0,0.2);
+      border-radius: 8px;
+    }
+
 #deleteModal .modal {
   border-color: rgba(239, 68, 68, 0.3);
 }
@@ -679,7 +716,16 @@ padding-bottom: 18px;
   to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-/* ── Responsive ── */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
 @media (max-width: 900px) {
   .grid-dashboard { grid-template-columns: 1fr; }
   .headerInner   { grid-template-columns: 1fr auto; }

@@ -37,61 +37,89 @@ db.getConnection((err, connection) => {
 });
 
 ///////////////////////////
+// DASHBOARD
+///////////////////////////
+app.get("/dashboard-totals/:user_id", (req, res) => {
+    const { user_id } = req.params;
+    
+    const query = `
+      SELECT u.starting_balance, 
+      (SELECT current_balance FROM monthly_balance WHERE user_id = u.id ORDER BY id DESC LIMIT 1) as current_balance
+      FROM users u 
+      WHERE u.id = ?`;
+
+    db.query(query, [user_id], (err, results) => {
+        if (err) return res.status(500).json({ error: err.message });
+        
+        console.log("Database Results:", results[0]); 
+        res.json({ 
+            status: "success", 
+            current_balance: results[0].current_balance || 0 
+        });
+    });
+});
+
+///////////////////////////
 // SIGN-UP
 ///////////////////////////
 app.post("/signup", async (req, res) => {
-  try {
     const { display_name, email, password, starting_balance } = req.body;
 
-    if (!display_name || !email || !password || starting_balance === undefined || starting_balance.trim() === "") {
-      return res.json({ status: "error", message: "All fields are required." });
+    if (!display_name || !email || !password || starting_balance === undefined) {
+        return res.json({ status: "error", message: "All fields are required." });
     }
 
-    db.query("SELECT * FROM users WHERE email = ?", [email], async (err, results) => {
-      if (err) return res.json({ status: "error", message: err.message });
-      if (results.length > 0) return res.json({ status: "error", message: "Email already exists." });
+    // 1. Check kung existing na ang email
+    db.query("SELECT id FROM users WHERE email = ?", [email], async (err, results) => {
+        if (err) return res.json({ status: "error", message: err.message });
+        if (results.length > 0) return res.json({ status: "error", message: "Email already exists." });
 
-      const hashedPassword = await bcrypt.hash(password, 10);
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const balance = parseFloat(starting_balance);
+        const now = new Date();
 
-      db.query(
-        "INSERT INTO users (display_name, email, password, starting_balance) VALUES (?, ?, ?, ?)",
-        [display_name, email, hashedPassword, parseFloat(starting_balance)],
-        (err, result) => {
+        // 2. Simulan ang Transaction
+        db.getConnection((err, connection) => {
+            if (err) return res.json({ status: "error", message: "Database connection failed" });
 
-          if (err) return res.json({ status: "error", message: err.message });
+            connection.beginTransaction(async (err) => {
+                try {
+                    // A. Insert User
+                    const [userResult] = await connection.promise().query(
+                        "INSERT INTO users (display_name, email, password, starting_balance) VALUES (?, ?, ?, ?)",
+                        [display_name, email, hashedPassword, balance]
+                    );
+                    const user_id = userResult.insertId;
 
-          const user_id = result.insertId;
-          const now = new Date();
-          const month = now.getMonth() + 1;
-          const year = now.getFullYear();
-          const date = now.toISOString().split("T")[0];
+                    // B. Insert Monthly Balance
+                    await connection.promise().query(
+                        "INSERT INTO monthly_balance (user_id, month, year, month_income, current_balance) VALUES (?, ?, ?, ?, ?)",
+                        [user_id, now.getMonth() + 1, now.getFullYear(), balance, balance]
+                    );
 
-          // INSERT STARTING BALANCE INTO monthly_balance
-          db.query(
-            "INSERT INTO monthly_balance (user_id, month, year, balance) VALUES (?, ?, ?, ?)",
-            [user_id, month, year, parseFloat(starting_balance)]
-          );
+                    // C. Insert Income
+                    await connection.promise().query(
+                        "INSERT INTO income (user_id, starting_money, salary, freelance, net_income, income_date) VALUES (?, ?, 0, 0, 0, ?)",
+                        [user_id, balance, now.toISOString().split("T")[0]]
+                    );
 
-          // INSERT STARTING BALANCE INTO income (so Monthly Income shows it)
-          db.query(
-            "INSERT INTO income (user_id, starting_money, salary, freelance, net_income, income_date) VALUES (?, ?, ?, ?, ?, ?)",
-            [user_id, parseFloat(starting_balance), 0, 0, 0, date]
-          );
+                    // D. Insert Expenses
+                    await connection.promise().query(
+                        "INSERT INTO expenses (user_id, Rent, Food, Transport, Shopping, Bills, Entertainment) VALUES (?, 0, 0, 0, 0, 0, 0)",
+                        [user_id]
+                    );
 
-          res.json({ 
-            status: "success", 
-            user_id, 
-            display_name, 
-            starting_balance: parseFloat(starting_balance)
-          });
-
-        }
-      );
+                    connection.commit();
+                    res.json({ status: "success", user_id });
+                } catch (error) {
+                    connection.rollback();
+                    res.json({ status: "error", message: error.message });
+                } finally {
+                    connection.release();
+                }
+            });
+        });
     });
-
-  } catch (error) {
-    res.json({ status: "error", message: error.message });
-  }
 });
 
 ///////////////////////////
@@ -143,21 +171,18 @@ app.post("/forgot-password", (req, res) => {
     if (results.length === 0) return res.json({ status: "error", message: "Email not found." });
 
     const token = crypto.randomBytes(20).toString("hex");
-    const expires_at = new Date(Date.now() + 3600 * 1000); // 1 hour expiration
-
+    const expires_at = new Date(Date.now() + 3600 * 1000);
     db.query(
       "INSERT INTO password_reset (email, token, expires_at) VALUES (?, ?, ?)",
       [email, token, expires_at],
       (err2) => {
         if (err2) return res.json({ status: "error", message: err2.message });
-        // You would normally send email here
+ 
         res.json({ status: "success", message: `Reset link generated. Token: ${token}` });
       }
     );
   });
 });
-
-
 
 ///////////////////////////
 // INCOME
@@ -184,78 +209,66 @@ app.get("/income/:user_id", (req, res) => {
   });
 });
 
-app.get("/income", (req, res) => {
-  const userId = req.query.user_id || 1;
+app.post("/add-income/:user_id", (req, res) => {
+  const { user_id } = req.params;
+  const { source, amount } = req.body;
+  const date = new Date().toISOString().split("T")[0];
 
-  const income = {
-    salary: 20000,
-    freelance: 5000,
-    net_income: 1000,
-  };
-  res.json({ status: "success", ...income });
+  let column = "net_income";
+  if (source === "Salary") column = "salary";
+  if (source === "Freelance") column = "freelance";
+
+  const incomeQuery = `UPDATE income SET ${column} = ${column} + ? WHERE user_id = ? ORDER BY id DESC LIMIT 1`;
+  
+  db.query(incomeQuery, [amount, user_id], (err) => {
+    if (err) return res.json({ status: "error", message: err.message });
+
+    db.query(
+      "UPDATE monthly_balance SET month_income = month_income + ?, current_balance = current_balance + ? WHERE user_id = ? ORDER BY id DESC LIMIT 1",
+      [amount, amount, user_id],
+      (err2) => {
+        if (err2) return res.json({ status: "error", message: err2.message });
+        res.json({ status: "success", message: "Income added and balance updated" });
+      }
+    );
+  });
 });
 
 ///////////////////////////
 // EXPENSES
 ///////////////////////////
-app.post("/expenses", (req, res) => {
-  const { user_id, category, amount, expense_date, description } = req.body;
-  if (!user_id || !category || !amount || !expense_date) return res.json({ status: "error", message: "Required fields missing." });
-
-  db.query(
-    "INSERT INTO expenses (user_id, category, amount, expense_date, description) VALUES (?, ?, ?, ?, ?)",
-    [user_id, category, amount, expense_date, description || ""],
-    (err, result) => {
-      if (err) return res.json({ status: "error", message: err.message });
-      res.json({ status: "success", expense_id: result.insertId });
-    }
-  );
-});
-
-app.get("/expenses/:user_id", (req, res) => {
+app.get("/expenses-data/:user_id", (req, res) => {
   const { user_id } = req.params;
-  db.query("SELECT * FROM expenses WHERE user_id = ?", [user_id], (err, results) => {
+  db.query("SELECT Rent, Food, Transport, Shopping, Bills, Entertainment FROM expenses WHERE user_id = ?", [user_id], (err, results) => {
     if (err) return res.json({ status: "error", message: err.message });
-    res.json({ status: "success", data: results });
+    if (results.length === 0) return res.json({ status: "success", data: { Rent: 0, Food: 0, Transport: 0, Shopping: 0, Bills: 0, Entertainment: 0 } });
+    
+    res.json({ status: "success", data: results[0] });
   });
 });
 
-app.get("/", (req, res) => {
-  res.send("Server is running!");
-});
+app.post("/add-expense/:user_id", (req, res) => {
+  const { user_id } = req.params;
+  const { category, amount } = req.body;
 
-app.get("/dashboard/:user_id", (req, res) => {
-  const user_id = req.params.user_id;
+  const validCategories = ["Rent", "Food", "Transport", "Shopping", "Bills", "Entertainment"];
+  if (!validCategories.includes(category)) {
+    return res.json({ status: "error", message: "Invalid category" });
+  }
 
-  const query = `
-    SELECT 
-      u.display_name AS username,
-      COALESCE(i.salary,0) AS salary,
-      COALESCE(i.freelance,0) AS freelance,
-      COALESCE(i.net_income, u.starting_balance) AS net_income,
-      COALESCE(b.balance, u.starting_balance) AS balance
-    FROM users u
-    LEFT JOIN income i ON u.id = i.user_id
-    LEFT JOIN monthly_balance b ON u.id = b.user_id
-    WHERE u.id = ?
-    ORDER BY i.id DESC
-    LIMIT 1
-  `;
+  const query = `UPDATE expenses SET \`${category}\` = \`${category}\` + ? WHERE user_id = ?`;
 
-  db.query(query, [user_id], (err, result) => {
+  db.query(query, [parseFloat(amount), user_id], (err) => {
     if (err) return res.json({ status: "error", message: err.message });
 
-    if (result.length === 0) {
-      return res.json({
-        username: "",
-        salary: 0,
-        freelance: 0,
-        net_income: 0,
-        balance: 0
-      });
-    }
-
-    res.json(result[0]);
+    db.query(
+      "UPDATE monthly_balance SET current_balance = current_balance - ? WHERE user_id = ? ORDER BY id DESC LIMIT 1",
+      [parseFloat(amount), user_id],
+      (err2) => {
+        if (err2) return res.json({ status: "error", message: err2.message });
+        res.json({ status: "success", message: "Expense updated" });
+      }
+    );
   });
 });
 
@@ -264,7 +277,7 @@ app.get("/balance/:user_id", (req, res) => {
   const { user_id } = req.params;
 
   db.query(
-    "SELECT balance FROM monthly_balance WHERE user_id = ? ORDER BY id DESC LIMIT 1",
+    "SELECT current_balance FROM monthly_balance WHERE user_id = ? ORDER BY id DESC LIMIT 1",
     [user_id],
     (err, results) => {
       if (err) return res.json({ status: "error", message: err.message });
@@ -275,10 +288,40 @@ app.get("/balance/:user_id", (req, res) => {
 
       res.json({
         status: "success",
-        balance: results[0].balance
+        balance: results[0].current_balance
       });
     }
   );
+});
+
+app.get('/api/monthly-stats/:userId', (req, res) => {
+    const userId = req.params.userId;
+
+    const query = `
+        SELECT month, month_income, current_balance 
+        FROM monthly_balance 
+        WHERE user_id = ? 
+        ORDER BY year DESC, month DESC 
+        LIMIT 12`;
+
+    db.query(query, [userId], (err, results) => {
+        if (err) {
+            console.error("Error fetching stats:", err);
+            return res.status(500).json({ status: "error", message: err.message });
+        }
+        
+        if (!results || results.length === 0) {
+            return res.json({ labels: [], income: [], expenses: [] });
+        }
+        
+        const data = results.reverse(); 
+        
+        res.json({ 
+            labels: data.map(r => `Month ${r.month}`),
+            income: data.map(r => r.month_income),
+            expenses: data.map(r => Math.max(0, r.month_income - r.current_balance))
+        });
+    });
 });
 
 ///////////////////////////

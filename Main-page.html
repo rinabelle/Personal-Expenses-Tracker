@@ -4,8 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Peso Tracker</title>
-  <script src="js/chart.js"></script>
-  <link rel="stylesheet" href="css/Main-page.css">
+    <link rel="stylesheet" href="css/Main-page.css">
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -13,6 +12,7 @@
     
 </head>
 <body>
+  
   <!--Headerrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr-->
   <header class="TopHeader">
     <div class="headerInner">
@@ -29,14 +29,14 @@
         <div>
           <span class="brand-name">Peso Tracker</span>
           <p class="greeting">
-            Hello, <span id="username">User</span> &middot; <span id="current-date"></span>
+            Hello, <span id="display-username"></span> &middot; <span id="current-date"></span>
           </p>
         </div>
       </div>
 
       <div class="dropdown">
         <button class="dropdown-btn" id="header-dropdown" aria-expanded="false" aria-haspopup="listbox">
-          <span id="drpdwnLabel">View Present</span>
+          <span id="dropdown-label">View Present</span>
             <svg class="chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="m6 9 6 6 6-6"></path>
             </svg>
@@ -177,50 +177,49 @@
 
           <ul class="txn-list">
             <li class="txn-item">
-              <div class="txnName"><span class="dot dot-green"></span>Salary</div>
-              <span class="txn-amount">&#8369;</span>
+              <div class="txnName">Salary</div>
+              <span class="txn-amount" id="display-salary">₱ 0</span>
             </li>
 
             <li class="txn-item">
-              <div class="txnName"><span class="dot dot-green"></span>Freelance</div>
-              <span class="txn-amount">&#8369;</span>
+              <div class="txnName">Freelance</div>
+              <span class="txn-amount" id="display-freelance">₱ 0</span>
             </li>
 
             <li class="txn-item">
-              <div class="txnName"><span class="dot dot-green"></span>Net Income (Business)</div>
-              <span class="txn-amount">&#8369;</span>
+              <div class="txnName">Business</div>
+              <span class="txn-amount" id="display-business">₱ 0</span>
             </li>
           </ul>
           <hr class="line"/>
 
           <p class="section-lbl red">Expense Categories</p>
-          <ul class="txn-list">
-            <li class="txn-item">
-              <div class="txnName"><span class="dot dot-blue"></span>Rent</div>
-              <span class="txn-amount">&#8369; </span>
-            </li>
-            <li class="txn-item">
-              <div class="txnName"><span class="dot dot-red"></span>Food</div>
-              <span class="txn-amount">&#8369; </span>
-            </li>
-            <li class="txn-item">
-              <div class="txnName"><span class="dot dot-green"></span>Transport</div>
-              <span class="txn-amount">&#8369; </span>
-            </li>
-            <li class="txn-item">
-              <div class="txnName"><span class="dot dot-pink"></span>Shopping</div>
-              <span class="txn-amount">&#8369; </span>
-            </li>
-            <li class="txn-item">
-              <div class="txnName"><span class="dot dot-indigo"></span>Bills</div>
-              <span class="txn-amount">&#8369; </span>
-            </li>
-            <li class="txn-item">
-              <div class="txnName"><span class="dot dot-purple"></span>Entertainment</div>
-              <span class="txn-amount">&#8369; </span>
-            </li>
-
-          </ul>
+            <ul class="txn-list">
+              <li class="txn-item">
+                <div class="txnName">Rent</div>
+                <span class="txn-amount" id="Rent">₱ 0</span>
+              </li>
+              <li class="txn-item">
+                <div class="txnName">Food</div>
+                <span class="txn-amount" id="Food">₱ 0</span>
+              </li>
+              <li class="txn-item">
+                <div class="txnName">Transport</div>
+                <span class="txn-amount" id="Transport">₱ 0</span>
+              </li>
+              <li class="txn-item">
+                <div class="txnName">Shopping</div>
+                <span class="txn-amount" id="Shopping">₱ 0</span>
+              </li>
+              <li class="txn-item">
+                <div class="txnName">Bills</div>
+                <span class="txn-amount" id="Bills">₱ 0</span>
+              </li>
+              <li class="txn-item">
+                <div class="txnName">Entertainment</div>
+                <span class="txn-amount" id="Entertainment">₱ 0</span>
+              </li>
+            </ul>
         </article>
 
         <div class="main-actions">
@@ -234,52 +233,46 @@
       <section class="rightside">
 
         <article class="card">
-          <h2 class="cardName" id="expense-chart-title">Expense Breakdown</h2>
-          <div class="chart-layout">
-            <canvas id="pieChart" width="300" height="300"></canvas>
-            <figure class="donut-wrap">
-              <div class="donut">
-                <span class="donut-lbl">&#8369;</span>
-              </div>
-            </figure>
+            <h2 class="cardName" id="expense-chart-title">Expense Breakdown</h2>
 
-            <div class="legend">
-              <div class="legend-item">
-                <span class="dot dot-blue"></span><span>Rent</span>
-                <span class="legend-amount">&#8369;</span>
+              <div class="chart-layout">
+                <canvas id="pieChart" width="200" height="200"></canvas>
               </div>
 
               <div class="legend-item">
-                <span class="dot dot-red"></span><span>Food</span>
-                <span class="legend-amount">&#8369;</span>
+                  <span class="dot dot-indigo"></span><span>Rent</span>
+                  <span class="legend-amount" id="leg-Rent">₱ 0</span>
               </div>
 
               <div class="legend-item">
-                <span class="dot dot-green"></span><span>Transport</span>
-                <span class="legend-amount">&#8369;</span>
+                  <span class="dot dot-rose"></span><span>Food</span>
+                  <span class="legend-amount" id="leg-Food">₱ 0</span>
               </div>
 
               <div class="legend-item">
-                <span class="dot dot-pink"></span><span>Shopping</span>
-                <span class="legend-amount">&#8369;</span>
+                  <span class="dot dot-emerald"></span><span>Transport</span>
+                  <span class="legend-amount" id="leg-Transport">₱ 0</span>
               </div>
 
               <div class="legend-item">
-                <span class="dot dot-indigo"></span><span>Bills</span>
-                <span class="legend-amount">&#8369;</span>
+                  <span class="dot dot-yellow"></span><span>Shopping</span>
+                  <span class="legend-amount" id="leg-Shopping">₱ 0</span>
               </div>
 
               <div class="legend-item">
-                <span class="dot dot-blue"></span><span>Entertainment</span>
-                <span class="legend-amount">&#8369;</span>
+                  <span class="dot dot-orange"></span><span>Bills</span>
+                  <span class="legend-amount" id="leg-Bills">₱ 0</span>
               </div>
 
-              <div class="legend-total">
-                <span>Total</span>
-                <span>&#8369;</span>
+              <div class="legend-item">
+                  <span class="dot dot-purple"></span><span>Entertainment</span>
+                  <span class="legend-amount" id="leg-Entertainment">₱ 0</span>
               </div>
+
+            <div class="total-expense-footer" style="display: flex; justify-content: space-between; border-top: 1px solid #334; padding-top: 10px;">
+                <span >Total Expenses:</span>
+                <span id="total-expense-value">₱ 0.00</span>
             </div>
-          </div>
         </article>
 
         <article class="card card-grow">
@@ -292,122 +285,27 @@
             </div>
           </header>
 
-          <figure class="bar-chart">
-            <div class="bar-group">
-              <div class="bar-pair">
-                <div class="bar bar-income"></div>
-                <div class="bar bar-expense"></div>
-              </div>
-              <span class="bar-lbl">Jan.</span>
-            </div>
-
-            <div class="bar-group">
-              <div class="bar-pair">
-                <div class="bar bar-income"></div>
-                <div class="bar bar-expense"></div>
-              </div>
-              <span class="bar-lbl">Feb.</span>
-            </div>
-
-            <div class="bar-group">
-              <div class="bar-pair">
-                <div class="bar bar-income"></div>
-                <div class="bar bar-expense"></div>
-              </div>
-              <span class="bar-lbl">Mar.</span>
-            </div>
-
-            <div class="bar-group">
-              <div class="bar-pair">
-                <div class="bar bar-income"></div>
-                <div class="bar bar-expense"></div>
-              </div>
-              <span class="bar-lbl">Apr.</span>
-            </div>
-
-            <div class="bar-group">
-              <div class="bar-pair">
-                <div class="bar bar-income"></div>
-                <div class="bar bar-expense"></div>
-              </div>
-              <span class="bar-lbl">May</span>
-            </div>
-
-            <div class="bar-group">
-              <div class="bar-pair">
-                <div class="bar bar-income"></div>
-                <div class="bar bar-expense"></div>
-              </div>
-              <span class="bar-lbl">June</span>
-            </div>
-
-            <div class="bar-group">
-              <div class="bar-pair">
-                <div class="bar bar-income"></div>
-                <div class="bar bar-expense"></div>
-              </div>
-              <span class="bar-lbl">July</span>
-            </div>
-
-            <div class="bar-group">
-              <div class="bar-pair">
-                <div class="bar bar-income"></div>
-                <div class="bar bar-expense"></div>
-              </div>
-              <span class="bar-lbl">Aug.</span>
-            </div>
-            
-            <div class="bar-group">
-              <div class="bar-pair">
-                <div class="bar bar-income"></div>
-                <div class="bar bar-expense"></div>
-              </div>
-              <span class="bar-lbl">Sept.</span>
-            </div>
-            
-            <div class="bar-group">
-              <div class="bar-pair">
-                <div class="bar bar-income"></div>
-                <div class="bar bar-expense"></div>
-              </div>
-              <span class="bar-lbl">Oct.</span>
-            </div>
-
-            <div class="bar-group">
-              <div class="bar-pair">
-                <div class="bar bar-income"></div>
-                <div class="bar bar-expense"></div>
-              </div>
-              <span class="bar-lbl">Nov.</span>
-            </div>
-
-            <div class="bar-group">
-              <div class="bar-pair">
-                <div class="bar bar-income"></div>
-                <div class="bar bar-expense"></div>
-              </div>
-              <span class="bar-lbl">Dec.</span>
-            </div>
-          </figure>
+          <div class="chart-container" style="position: relative; height: 300px; width: 100%;">
+            <canvas id="mychart"></canvas>
+          </div>
         </article>
 
         <div class="stats-grid" role="region">
           <article class="card stat-card">
             <h3 class="stat-lbl" id="stat-daily">Avg Daily</h3>
-            <p class="stat-value white">&#8369;</p>
+            <p class="stat-value white" id="avg-daily-val">&#8369;</p>
             <p class="stat-sub">spending</p>
           </article>
 
           <article class="card stat-card">
             <h3 class="stat-lbl" id="stat-savings">Savings Rate</h3>
-            <p class="stat-value green">%</p>
+            <p class="stat-value green" id="savings-rate-val">%</p>
             <p class="stat-sub">of income</p>
           </article>
 
           <article class="card stat-card">
             <h3 class="stat-lbl" id="stat-top">Top Expense</h3>
-            <p class="stat-value blue">Rent</p>
-            <p class="stat-sub">&#8369;</p>
+            <p class="stat-value blue" id="top-expense-val">&#8369;</p>
           </article>
         </div>
 
@@ -478,9 +376,8 @@
               <div class="drpdown">
                 <label for="expenses-dropdown">Expense Category</label>
 
-                <button class="dropdown-btn" id="expenses-dropdown" aria-expanded="false" aria-haspopup="listbox">
+                <button class="drpdwnBtn" id="expenses-dropdown" aria-expanded="false" aria-haspopup="listbox">
                   <span class="dropdown-label">Select category</span>
-
                   <svg class="chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="m6 9 6 6 6-6"></path>
                   </svg>
@@ -504,14 +401,13 @@
             </div>
 
             <footer class="modal-actions">
-              <button type="button" class="modal-btn modal-btn--cancel" id="cancelExpense">Cancel</button>
-              <button type="submit" class="modal-btn modal-btn--blue" id="saveExpense">Save</button>
+              <button class="modal-btn modal-btn--cancel" id="cancelExpense">Cancel</button>
+              <button class="modal-btn modal-btn--blue" id="saveExpense">Save</button>
             </footer>
 
           </form>
         </div>
       </section>
-
 
       <!-- ADD INCOME MODAL -->
       <section id="incomeModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="income-title" hidden>
@@ -529,7 +425,7 @@
               <label for="income-dropdown">Income Type</label>
 
               <div class="drpdown">
-                <button id="income-dropdown" class="dropdown-btn" aria-expanded="false" aria-haspopup="listbox">
+                <button id="income-dropdown" class="drpdwnBtn" aria-expanded="false" aria-haspopup="listbox">
                   <span class="dropdown-label">Select type</span>
 
                   <svg class="chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -538,9 +434,10 @@
                 </button>
 
                 <ul id="income-menu" class="menu" role="listbox" hidden>
-                  <li role="option">Salary</li>
-                  <li role="option">Freelance</li>
-                  <li role="option">Business</li>
+                  <li class="drpdwn-option active" role="option">Select</li>
+                  <li class="drpdwn-option" role="option">Salary</li>
+                  <li class="drpdwn-option" role="option">Freelance</li>
+                  <li class="drpdwn-option" role="option">Business</li>
                 </ul>
               </div>
               <div class="form-amount">
@@ -550,15 +447,15 @@
             </div>
 
             <footer class="modal-actions">
-              <button type="button" class="modal-btn modal-btn--cancel" id="cancelIncome">Cancel</button>
-              <button type="submit" class="modal-btn modal-btn--blue" id="saveIncome">Save</button>
+              <button class="modal-btn modal-btn--cancel" id="cancelIncome">Cancel</button>
+              <button class="modal-btn modal-btn--blue" id="saveIncome">Save</button>
             </footer>
 
           </form>
         </div>
       </section>
 
-  <script src="js/chartt.js"></script>
-  <script src="js/main.js"></script>
+<script src="js/chart.js"></script>
+<script src="js/main.js"></script>
 </body>
-</html>
+</html> 

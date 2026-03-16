@@ -27,28 +27,25 @@ async function fetchDashboard() {
 // ---------- FETCH EXPENSE DATA ----------
 async function fetchExpenses() {
   try {
-    const res = await fetch(`http://localhost:3000/expenses/${userId}`);
-    const expenses = await res.json();
+    const res = await fetch(`http://localhost:3000/expenses-data/${userId}`);
+    const result = await res.json();
 
-    if (expenses.status !== "success") return;
+    if (result.status !== "success") return;
 
-    // Categories in your HTML order
+    const data = result.data; // Ito ay object gaya ng { Rent: 100, Food: 200, ... }
     const categories = ["Rent", "Food", "Transport", "Shopping", "Bills", "Entertainment"];
-    const amounts = categories.map(cat => {
-      // Sum all expenses for this category
-      return expenses.data
-        .filter(e => e.category === cat)
-        .reduce((sum, e) => sum + parseFloat(e.amount), 0);
-    });
+    
+    // I-map ang values mula sa object
+    const amounts = categories.map(cat => parseFloat(data[cat] || 0));
 
     // Update donut chart total
     const total = amounts.reduce((a, b) => a + b, 0);
-    document.querySelector(".donut-lbl").textContent = `₱ ${total}`;
+    document.querySelector(".donut-lbl").textContent = `₱ ${total.toLocaleString()}`;
 
     // Update legend
     const legendEls = document.querySelectorAll(".legend .legend-amount");
     legendEls.forEach((el, i) => {
-      el.textContent = `₱ ${amounts[i] || 0}`;
+      el.textContent = `₱ ${amounts[i].toLocaleString() || 0}`;
     });
 
   } catch (err) {
