@@ -2,7 +2,8 @@
   // GLOBAL VARIABLES
   // ------------------------------
   const user_id = localStorage.getItem("user_id");
-  let pieChartInstance;
+  let pieChartInstance = null;
+  let myChartInstance = null;
   let currentIncome = { salary: 0, freelance: 0, net: 0, starting: 0 };
 
   const incomeEls = {
@@ -13,48 +14,57 @@
     monthly: document.getElementById("monthly_income")
   };
 
-    document.addEventListener("DOMContentLoaded", async () => {
-      if (!document.querySelector(".dashboard")) return;
+document.addEventListener("DOMContentLoaded", async () => {
+    if (!document.querySelector(".dashboard")) return;
 
-      const username = localStorage.getItem("display_name"); 
-      const userEl = document.getElementById("display-username");
-      if (userEl && username) userEl.textContent = username;
+    const username = localStorage.getItem("display_name"); 
+    const userEl = document.getElementById("display-username");
+    if (userEl && username) userEl.textContent = username;
       
-      setCurrentDate(); 
-      setupAllModals();
-      setupDropdowns();
+    setCurrentDate(); 
+    setupAllModals();
+    setupDropdowns();
 
-      await initializeDashboard();
-    });
+    await initializeDashboard(); 
+});
 
-    async function initializeDashboard() {
-      try {
-          await fetchUserIncome();
-          loadExpenseTotals();
-          loadMonthlyStats();
-          fetchDashboardTotals();
-          
-      } catch (err) {
-          console.error("Dashboard failed:", err);
-      }
-  }
+async function initializeDashboard() {
+    console.log("Initializing Dashboard...");
+    try {
+        await fetchUserIncome();
+        await loadExpenseTotals();
+        loadMonthlyStats();
+        fetchDashboardTotals();
+    } catch (err) {
+        console.error("Dashboard failed:", err);
+    }
+}
   // ------------------------------
   // DATA FETCHING FUNCTIONS
   // ------------------------------
-  function loadExpenseTotals() {
-      console.log("Loading expenses..."); 
-      
-      fetch(`http://localhost:3000/expenses-data/${user_id}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.status !== "success") return;
-          renderPieChart(data.data);
-          updateDonutTotal(data.data);
-          updateCashFlowStatus(data.data);
-          calculateFinancialInsights(data.data);
-        })
-        .catch(err => console.error(err));
-  }
+async function loadExpenseTotals() {
+    const uid = localStorage.getItem("user_id");
+    if (!uid) return;
+
+    try {
+        const res = await fetch(`http://localhost:3000/expenses-data/${uid}`);
+        
+        if (!res.ok) {
+            console.error("Server returned an error status:", res.status);
+            return;
+        }
+
+        const data = await res.json();
+        if (data.status === "success") {
+            renderPieChart(data.data);
+            updateDonutTotal(data.data);
+            updateCashFlowStatus(data.data);
+            calculateFinancialInsights(data.data);
+        }
+    } catch (err) {
+        console.error("Fetch failed or JSON is invalid:", err);
+    }
+}
 
 function fetchDashboardTotals() {
     fetch(`http://localhost:3000/dashboard-totals/${user_id}`)
@@ -73,6 +83,34 @@ function fetchDashboardTotals() {
       })
       .catch(err => console.error("Error sa fetchDashboardTotals:", err));
 }
+
+  async function syncDashboard() {
+      try {
+          const res = await fetch(`http://localhost:3000/api/monthly-stats/${user_id}`);
+          const data = await res.json();
+
+          if (!data.expenses || data.expenses.length === 0) return;
+
+          const currentTotalExpense = data.expenses[data.expenses.length - 1];
+          const currentTotalIncome = data.income[data.income.length - 1];
+
+          updateCashFlowStatus({
+              totalFromDatabase: currentTotalExpense,
+              incomeFromDatabase: currentTotalIncome 
+          });
+
+          const totalEl = document.getElementById("total-expense-value");
+          if (totalEl) {
+              totalEl.textContent = currentTotalExpense.toLocaleString("en-PH", { 
+                  style: "currency", 
+                  currency: "PHP" 
+              });
+          }
+
+      } catch (err) {
+          console.error("Sync Error:", err);
+      }
+  }
 
   // -----------------------------
   // DATA FETCHING
@@ -149,59 +187,116 @@ function fetchDashboardTotals() {
 // UI UPDATE WORKERS
 // ------------------------------
 function updateCashFlowStatus(expenseTotals = {}) {
-  if (Object.keys(expenseTotals).length === 0) {
+    if (Object.keys(expenseTotals).length === 0) {
         console.warn("Skipping update: No expense data provided.");
-        return; 
+        return;
     }
-    console.log("Updating UI with totals:", expenseTotals);
+
     const categories = ["Rent", "Food", "Transport", "Shopping", "Bills", "Entertainment"];
     
     categories.forEach(cat => {
         const amount = parseFloat(expenseTotals[cat] || 0);
         const formatted = amount.toLocaleString("en-PH", { style: "currency", currency: "PHP" });
-        
         const el = document.getElementById(cat);
-        const legElBottom = document.getElementById(`leg-${cat}`); 
-        
+        const legElBottom = document.getElementById(`leg-${cat}`);
         if (el) el.textContent = formatted;
         if (legElBottom) legElBottom.textContent = formatted;
     });
 
-    const totalExpenses = categories.reduce((sum, cat) => sum + (parseFloat(expenseTotals[cat]) || 0), 0);
-    const monthlyIncome = currentIncome.salary + currentIncome.freelance + currentIncome.net;
-    const totalEl = document.getElementById("total-expense-value"); 
+    let finalTotal; 
+    if (expenseTotals.totalFromDatabase !== undefined) {
+        finalTotal = parseFloat(expenseTotals.totalFromDatabase);
+    } else {
+        finalTotal = categories.reduce((sum, cat) => sum + (parseFloat(expenseTotals[cat]) || 0), 0);
+    }
+
+    const totalEl = document.getElementById("total-expense-value");
+    if (totalEl) {
+        totalEl.textContent = finalTotal.toLocaleString("en-PH", { style: "currency", currency: "PHP" });
+    }
+
+    const monthlyIncome = expenseTotals.incomeFromDatabase || 
+                        (currentIncome.salary + currentIncome.freelance + currentIncome.net + (currentIncome.starting || 0));
     
-    if (totalEl) totalEl.textContent = totalExpenses.toLocaleString("en-PH", { style: "currency", currency: "PHP" });
+    const savingsValue = monthlyIncome - finalTotal;
+
+    const savingsEl = document.getElementById("savings-value");
+    if (savingsEl) {
+        savingsEl.textContent = savingsValue.toLocaleString("en-PH", { style: "currency", currency: "PHP" });
+        savingsEl.style.color = savingsValue < 0 ? "#3b82f6" : ""; 
+    }
 
     const expenseBar = document.querySelector(".progress-fill.progress-red");
     if (monthlyIncome > 0 && expenseBar) {
-        const percent = Math.min((totalExpenses / monthlyIncome) * 100, 100);
-        expenseBar.style.width = `${percent}%`;
+        const expPercent = Math.min((finalTotal / monthlyIncome) * 100, 100);
+        expenseBar.style.width = `${expPercent}%`;
+    }
+
+    const savingsBar = document.querySelector(".progress-fill.progress-green");
+    if (monthlyIncome > 0 && savingsBar) {
+        const savingsPercent = Math.max(0, ((monthlyIncome - finalTotal) / monthlyIncome) * 100);
+        savingsBar.style.width = `${savingsPercent}%`;
+    }
+
+    if (window.myBarChart) {
+        const expenseDatasetIndex = 1;
+        const dataset = window.myBarChart.data.datasets[expenseDatasetIndex].data;
+        const lastIndex = dataset.length - 1;
+        
+        dataset[lastIndex] = finalTotal;
+        window.myBarChart.update();
     }
 }
 
   async function loadMonthlyStats() {
-    try {
-        const response = await fetch(`http://localhost:3000/api/monthly-stats/${user_id}`);
-        const data = await response.json();
-        
-        const ctx = document.getElementById('mychart').getContext('2d');
-        
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: data.labels,
-                datasets: [
-                    { label: 'Income', data: data.income, backgroundColor: '#3b82f6' },
-                    { label: 'Expenses', data: data.expenses, backgroundColor: '#ef4444' }
-                ]
-            },
-            options: { responsive: true }
-        });
-    } catch (err) {
-        console.error("Error loading monthly stats:", err);
-    }
-}
+      try {
+          const response = await fetch(`http://localhost:3000/api/monthly-stats/${user_id}`);
+          const data = await response.json();
+
+          const canvas = document.getElementById('mychart');
+          if (!canvas) return;
+          const ctx = canvas.getContext('2d');
+
+          if (window.myBarChart) {
+              window.myBarChart.destroy();
+          }
+
+          window.myBarChart = new Chart(ctx, {
+              type: 'bar',
+              data: {
+                  labels: data.labels,
+                  datasets: [
+                      { 
+                          label: 'Income', 
+                          data: data.income, 
+                          backgroundColor: '#3b82f6',
+                          borderRadius: 5
+                      },
+                      { 
+                          label: 'Expenses', 
+                          data: data.expenses, 
+                          backgroundColor: '#ef4444',
+                          borderRadius: 5
+                      }
+                  ]
+              },
+              options: { 
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  scales: {
+                      y: { 
+                          beginAtZero: true,
+                          ticks: {
+                              callback: (value) => '₱' + value.toLocaleString()
+                          }
+                      }
+                  }
+              }
+          });
+      } catch (err) {
+          console.error("Error loading monthly stats:", err);
+      }
+  }
 
   function renderPieChart(totals) {
     const ctx = document.getElementById("pieChart")?.getContext("2d");
@@ -239,8 +334,6 @@ function updateCashFlowStatus(expenseTotals = {}) {
     const label = document.querySelector(".donut-lbl");
     if (label) label.textContent = `₱ ${total.toLocaleString()}`;
   }
-
-let myChartInstance = null;
 
 async function initCharts() {
     const ctx = document.getElementById("mychart")?.getContext("2d");
@@ -385,7 +478,7 @@ async function initCharts() {
     });
 
     setupLogoutModal();
-    setupDeleteModal();
+    setupDeleteAccount();
     setupExpenseModal();
     setupIncomeModal();
   }
@@ -400,25 +493,7 @@ async function initCharts() {
     }
   }
 
-  function setupDeleteModal() {
-    const confirmDelete = document.getElementById("confirmDelete");
-    if (confirmDelete) {
-      confirmDelete.addEventListener("click", () => {
-        fetch(`http://localhost:3000/delete-user/${user_id}`, { method: "DELETE" })
-          .then(res => res.json())
-          .then(data => {
-            if (data.status === "success") {
-              localStorage.clear();
-              window.location.href = "Log-in.html";
-            } else {
-              alert(data.message || "Failed to delete account");
-            }
-          })
-          .catch(err => console.error(err));
-      });
-    }
-  }
-
+ 
   function setupExpenseModal() {
     const saveExpense = document.getElementById("saveExpense");
     if (!saveExpense) return;
@@ -438,7 +513,7 @@ async function initCharts() {
       fetch(`http://localhost:3000/add-expense/${user_id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category, amount })
+        body: JSON.stringify({ category, amount, user_id: user_id})
       })
       .then(res => res.json())
       .then(data => {
@@ -446,7 +521,7 @@ async function initCharts() {
         saveExpense.disabled = false;
 
         if (data.status === "success") {
-          loadExpenseTotals();
+          loadExpenseTotals();  
           refreshCurrentBalance();
           document.getElementById("expenseModal").hidden = true;
           document.getElementById("expense-amount").value = "";
@@ -507,6 +582,58 @@ async function initCharts() {
       });
     });
   }
+
+  // -------- DELETE -------------------
+function setupDeleteAccount() {
+    const confirmDeleteBtn = document.getElementById("confirmDelete");
+    
+    if (confirmDeleteBtn) {
+        confirmDeleteBtn.addEventListener("click", async (e) => { 
+            e.preventDefault();
+
+            if (!user_id) {
+                alert("User ID not found. Please log in again.");
+                return;
+            }
+
+            confirmDeleteBtn.innerText = "Deleting...";
+            confirmDeleteBtn.disabled = true;
+
+            try {
+                const response = await fetch(`http://localhost:3000/delete-user/${user_id}`, {
+                    method: "DELETE",
+                    headers: { "Content-Type": "application/json" }
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error("Server Error Response:", errorText);
+                    alert("Server error: " + response.status + ". Pakicheck ang backend route.");
+                    confirmDeleteBtn.innerText = "Delete Account";
+                    confirmDeleteBtn.disabled = false;
+                    return;
+                }
+
+                const result = await response.json();
+
+                if (result.status === "success") {
+                    alert("Account successfully deleted.");
+                    localStorage.clear(); 
+                    window.location.href = "Log-in.html"; 
+                } else {
+                    alert("Delete failed: " + result.message);
+                    confirmDeleteBtn.innerText = "Delete Account";
+                    confirmDeleteBtn.disabled = false;
+                }
+            } catch (error) {
+                console.error("Fetch error:", error);
+                alert("Cannot connect to server. Is it running?");
+                confirmDeleteBtn.innerText = "Delete Account";
+                confirmDeleteBtn.disabled = false;
+            }
+        });
+    }
+}
 
     // -----------------------------
     // TATLO SA BABA NG RIGHT

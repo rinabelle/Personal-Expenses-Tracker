@@ -1,4 +1,3 @@
-// server.js
 const express = require("express");
 const mysql = require("mysql2");
 const cors = require("cors");
@@ -9,14 +8,14 @@ const app = express();
 const PORT = 3000;
 
 app.use(cors({
-  origin: "http://127.0.0.1:5500",
+  origin: ["http://127.0.0.1:5500", "http://localhost:5500"], 
+  methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
 }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// MySQL connection
 const db = mysql.createPool({
   host: "localhost",
   user: "root",
@@ -31,9 +30,46 @@ db.getConnection((err, connection) => {
   if (err) {
     console.log("Database connection failed:", err);
   } else {
-    console.log("Connected to MySQL");
+    console.log("Connected to MySQL - Ready for Requests");
     connection.release();
   }
+});
+
+app.use((req, res, next) => {
+    console.log(`${req.method} request received at ${req.url}`);
+    next();
+});
+
+///////////////////////////
+// DELETE ACCOUNT ROUTE
+///////////////////////////
+app.delete("/delete-user/:id", (req, res) => {
+    const user_id = req.params.id;
+    console.log("Attempting to delete user:", user_id);
+
+    const q1 = "DELETE FROM expenses WHERE user_id = ?";
+    const q2 = "DELETE FROM income WHERE user_id = ?";
+    const q3 = "DELETE FROM monthly_balance WHERE user_id = ?";
+    const q4 = "DELETE FROM users WHERE id = ?";
+
+    db.query(q1, [user_id], (err) => {
+        if (err) return res.status(500).json({ status: "error", message: "Expenses delete failed: " + err.message });
+
+        db.query(q2, [user_id], (err) => {
+            if (err) return res.status(500).json({ status: "error", message: "Income delete failed: " + err.message });
+
+            db.query(q3, [user_id], (err) => {
+                if (err) return res.status(500).json({ status: "error", message: "Monthly balance delete failed: " + err.message });
+
+                db.query(q4, [user_id], (err) => {
+                    if (err) return res.status(500).json({ status: "error", message: "User delete failed: " + err.message });
+                    
+                    console.log("User and all related records deleted successfully.");
+                    res.json({ status: "success", message: "Account deleted successfully" });
+                });
+            });
+        });
+    });
 });
 
 ///////////////////////////
@@ -138,7 +174,6 @@ app.post("/login", async (req, res) => {
       console.error(err);
       return res.json({ status: "error", message: "Database error" });
     }
-
     if (results.length === 0) {
       return res.json({ status: "error", message: "User not found." });
     }
@@ -235,92 +270,129 @@ app.post("/add-income/:user_id", (req, res) => {
 });
 
 ///////////////////////////
-// EXPENSES
+// EXPENSES SYSTEM
 ///////////////////////////
-app.get("/expenses-data/:user_id", (req, res) => {
-  const { user_id } = req.params;
-  db.query("SELECT Rent, Food, Transport, Shopping, Bills, Entertainment FROM expenses WHERE user_id = ?", [user_id], (err, results) => {
-    if (err) return res.json({ status: "error", message: err.message });
-    if (results.length === 0) return res.json({ status: "success", data: { Rent: 0, Food: 0, Transport: 0, Shopping: 0, Bills: 0, Entertainment: 0 } });
-    
-    res.json({ status: "success", data: results[0] });
-  });
-});
-
 app.post("/add-expense/:user_id", (req, res) => {
-  const { user_id } = req.params;
-  const { category, amount } = req.body;
+    const { user_id } = req.params;
+    const { category, amount } = req.body;
+    const expenseAmount = parseFloat(amount) || 0;
 
-  const validCategories = ["Rent", "Food", "Transport", "Shopping", "Bills", "Entertainment"];
-  if (!validCategories.includes(category)) {
-    return res.json({ status: "error", message: "Invalid category" });
-  }
+    let column = "";
+    if (category === "Rent") column = "Rent";
+    else if (category === "Food") column = "Food";
+    else if (category === "Transport") column = "Transport";
+    else if (category === "Shopping") column = "Shopping";
+    else if (category === "Bills") column = "Bills";
+    else if (category === "Entertainment") column = "Entertainment";
 
-  const query = `UPDATE expenses SET \`${category}\` = \`${category}\` + ? WHERE user_id = ?`;
-
-  db.query(query, [parseFloat(amount), user_id], (err) => {
-    if (err) return res.json({ status: "error", message: err.message });
-
-    db.query(
-      "UPDATE monthly_balance SET current_balance = current_balance - ? WHERE user_id = ? ORDER BY id DESC LIMIT 1",
-      [parseFloat(amount), user_id],
-      (err2) => {
-        if (err2) return res.json({ status: "error", message: err2.message });
-        res.json({ status: "success", message: "Expense updated" });
-      }
-    );
-  });
-});
-
-// GET CURRENT BALANCE
-app.get("/balance/:user_id", (req, res) => {
-  const { user_id } = req.params;
-
-  db.query(
-    "SELECT current_balance FROM monthly_balance WHERE user_id = ? ORDER BY id DESC LIMIT 1",
-    [user_id],
-    (err, results) => {
-      if (err) return res.json({ status: "error", message: err.message });
-
-      if (results.length === 0) {
-        return res.json({ status: "success", balance: 0 });
-      }
-
-      res.json({
-        status: "success",
-        balance: results[0].current_balance
-      });
+    if (!column) {
+        return res.json({ status: "error", message: "Invalid category: " + category });
     }
-  );
+
+    const expenseQuery = `UPDATE expenses SET ${column} = ${column} + ? WHERE user_id = ? ORDER BY id DESC LIMIT 1`;
+
+    db.query(expenseQuery, [expenseAmount, user_id], (err) => {
+        if (err) return res.json({ status: "error", message: "Expense Table Error: " + err.message });
+
+        const balanceQuery = `
+            UPDATE monthly_balance 
+            SET total_expense = total_expense + ?, 
+                current_balance = current_balance - ? 
+            WHERE user_id = ? 
+            ORDER BY id DESC LIMIT 1`;
+
+        db.query(balanceQuery, [expenseAmount, expenseAmount, user_id], (err2) => {
+            if (err2) return res.json({ status: "error", message: "Balance Table Error: " + err2.message });
+            
+            console.log(`SUCCESS: User ${user_id} spent ₱${expenseAmount} on ${column}`);
+            res.json({ status: "success", message: "Expense recorded successfully" });
+        });
+    });
 });
 
-app.get('/api/monthly-stats/:userId', (req, res) => {
-    const userId = req.params.userId;
+app.get("/expenses-data/:user_id", (req, res) => {
+    const { user_id } = req.params;
+    
+    const sql = `
+        SELECT 
+            SUM(Rent) as Rent, 
+            SUM(Food) as Food, 
+            SUM(Transport) as Transport, 
+            SUM(Shopping) as Shopping, 
+            SUM(Bills) as Bills, 
+            SUM(Entertainment) as Entertainment 
+        FROM expenses 
+        WHERE user_id = ?`;
 
+    db.query(sql, [user_id], (err, results) => {
+        if (err) return res.status(500).json({ status: "error", message: err.message });
+        
+        const data = results[0] || {};
+        res.json({
+            status: "success",
+            data: {
+                Rent: parseFloat(data.Rent) || 0,
+                Food: parseFloat(data.Food) || 0,
+                Transport: parseFloat(data.Transport) || 0,
+                Shopping: parseFloat(data.Shopping) || 0,
+                Bills: parseFloat(data.Bills) || 0,
+                Entertainment: parseFloat(data.Entertainment) || 0
+            }
+        });
+    });
+});
+
+app.get('/api/monthly-stats/:user_id', (req, res) => {
+    const userId = req.params.user_id;
+    
     const query = `
-        SELECT month, month_income, current_balance 
+        SELECT month, year, month_income, total_expense 
         FROM monthly_balance 
         WHERE user_id = ? 
-        ORDER BY year DESC, month DESC 
-        LIMIT 12`;
+        ORDER BY year ASC, month ASC`;
 
     db.query(query, [userId], (err, results) => {
         if (err) {
-            console.error("Error fetching stats:", err);
-            return res.status(500).json({ status: "error", message: err.message });
+            console.error("SQL Error:", err);
+            return res.status(500).json({ error: "Database error" });
         }
+
+        const monthNames = ["January", "February", "March", "April", "May", "June", 
+                            "July", "August", "September", "October", "November", "December"];
+
+        const labels = results.map(row => `${monthNames[row.month - 1]} ${row.year}`);
+        const income = results.map(row => parseFloat(row.month_income) || 0);
+        const expenses = results.map(row => parseFloat(row.total_expense) || 0);
+
+        res.json({ labels, income, expenses });
+    });
+});
+
+app.get("/overview/month/:period", (req, res) => {
+    const { period } = req.params;
+    const { user_id } = req.query;
+
+    if (!user_id) return res.status(400).json({ status: "error", message: "User ID required" });
+
+    let timeConstraint = "";
+    if (period === "Last Week") {
+        timeConstraint = "AND date_created >= DATE_SUB(NOW(), INTERVAL 7 DAY)";
+    } else if (period === "Last Month") {
+        timeConstraint = "AND date_created >= DATE_SUB(NOW(), INTERVAL 30 DAY)";
+    } else if (period === "This Year") {
+        timeConstraint = "AND YEAR(date_created) = YEAR(NOW())";
+    }
+
+    const sql = `SELECT Rent, Food, Transport, Shopping, Bills, Entertainment 
+                 FROM expenses 
+                 WHERE user_id = ? ${timeConstraint} 
+                 ORDER BY id DESC LIMIT 1`;
+
+    db.query(sql, [user_id], (err, results) => {
+        if (err) return res.status(500).json({ status: "error", message: err.message });
         
-        if (!results || results.length === 0) {
-            return res.json({ labels: [], income: [], expenses: [] });
-        }
-        
-        const data = results.reverse(); 
-        
-        res.json({ 
-            labels: data.map(r => `Month ${r.month}`),
-            income: data.map(r => r.month_income),
-            expenses: data.map(r => Math.max(0, r.month_income - r.current_balance))
-        });
+        const data = results[0] || { Rent: 0, Food: 0, Transport: 0, Shopping: 0, Bills: 0, Entertainment: 0 };
+        res.json({ status: "success", data: data });
     });
 });
 

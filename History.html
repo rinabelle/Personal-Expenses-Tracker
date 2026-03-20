@@ -1,0 +1,50 @@
+<div class="dropdown">
+        <button class="dropdown-btn" id="header-dropdown" aria-expanded="false" aria-haspopup="listbox">
+          <span id="dropdown-label">View Present</span>
+            <svg class="chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m6 9 6 6 6-6"></path>
+            </svg>
+        </button>
+        
+        <ul class="menu" id="header-menu" role="listbox" hidden>
+          <li class="drpdwn-option active" role="option">Present</li>
+          <li class="drpdwn-option" role="option">Last Week</li>
+          <li class="drpdwn-option" role="option">Last Month</li>
+          <li class="drpdwn-option" role="option">Last 3 Months</li>
+          <li class="drpdwn-option" role="option">This Year</li>
+        </ul>
+      </div>
+
+      <script>
+            setupDropdown("header-dropdown", "header-menu", null, initMonthDropdown);
+          function initMonthDropdown(selection) {
+    const mapping = {
+      "Present": "present",
+      "Last Week": "week",
+      "Last Month": "month",
+      "Last 3 Months": "3months",
+      "This Year": "year"
+    };
+    const period = mapping[selection];
+    if (!period) return;
+
+    if (period === "present") {
+      fetchUserIncome();
+      loadExpenseTotals();
+    } else {
+      fetch(`http://localhost:3000/overview/month/${period}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === "success") {
+            const { income, balance, expenseTotals } = data.data;
+            setIncome(Number(income.salary), Number(income.freelance), Number(income.net_income));
+            const balanceEl = document.getElementById("current_balance");
+            if (balanceEl) balanceEl.textContent = Number(balance).toLocaleString("en-PH", { style: "currency", currency: "PHP" });
+            renderPieChart(expenseTotals);
+            updateCashFlowStatus(expenseTotals);
+          }
+        })
+        .catch(err => console.error("Error fetching historical data:", err));
+    }
+  }
+      </script>
