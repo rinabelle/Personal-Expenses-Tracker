@@ -36,7 +36,7 @@
 
       <div class="dropdown">
         <button class="dropdown-btn" id="header-dropdown" aria-expanded="false" aria-haspopup="listbox">
-          <span id="dropdown-label">View Present</span>
+          <span class="dropdown-label">View Present</span> <i class="fas fa-chevron-down"></i>
             <svg class="chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="m6 9 6 6 6-6"></path>
             </svg>
@@ -44,10 +44,18 @@
         
         <ul class="menu" id="header-menu" role="listbox" hidden>
           <li class="drpdwn-option active" role="option">Present</li>
-          <li class="drpdwn-option" role="option">Last Week</li>
-          <li class="drpdwn-option" role="option">Last Month</li>
-          <li class="drpdwn-option" role="option">Last 3 Months</li>
-          <li class="drpdwn-option" role="option">This Year</li>
+          <li class="drpdwn-option" role="option" data-month="1">January</li>
+          <li class="drpdwn-option" role="option" data-month="2">February</li>
+          <li class="drpdwn-option" role="option" data-month="3">March</li>
+          <li class="drpdwn-option" role="option" data-month="4">April</li>
+          <li class="drpdwn-option" role="option" data-month="5">May</li>
+          <li class="drpdwn-option" role="option" data-month="6">June</li>
+          <li class="drpdwn-option" role="option" data-month="7">July</li>
+          <li class="drpdwn-option" role="option" data-month="8">August</li>
+          <li class="drpdwn-option" role="option" data-month="9">September</li>
+          <li class="drpdwn-option" role="option" data-month="10">October</li>
+          <li class="drpdwn-option" role="option" data-month="11">November</li>
+          <li class="drpdwn-option" role="option" data-month="12">December</li>
         </ul>
       </div>
 
@@ -165,7 +173,7 @@
                 </svg>
                 <span>Savings</span>
               </div>
-              <span class="flow-amount green">&#8369;</span>
+              <span class="flow-amount green" >&#8369;</span>
             </div>
             
             <div class="progress-track">

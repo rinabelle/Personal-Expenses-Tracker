@@ -39,30 +39,38 @@ async function initializeDashboard() {
         console.error("Dashboard failed:", err);
     }
 }
+
+const viewPresentBtn = document.getElementById("view-present-btn");
+if (viewPresentBtn) {
+    viewPresentBtn.addEventListener("click", () => {
+        const labelElement = document.querySelector('.dropdown-label');
+        if (labelElement) {
+            labelElement.textContent = "View History"; // O "Present View"
+            labelElement.style.color = ""; 
+        }
+        initializeDashboard(); 
+    });
+}
+
   // ------------------------------
   // DATA FETCHING FUNCTIONS
   // ------------------------------
 async function loadExpenseTotals() {
-    const uid = localStorage.getItem("user_id");
-    if (!uid) return;
-
+    if (!user_id) return;
     try {
-        const res = await fetch(`http://localhost:3000/expenses-data/${uid}`);
-        
-        if (!res.ok) {
-            console.error("Server returned an error status:", res.status);
-            return;
-        }
-
+        const res = await fetch(`http://localhost:3000/expenses-data/${user_id}`);
         const data = await res.json();
-        if (data.status === "success") {
-            renderPieChart(data.data);
-            updateDonutTotal(data.data);
-            updateCashFlowStatus(data.data);
-            calculateFinancialInsights(data.data);
-        }
+        
+        console.log("DEBUG: Expense Data Received:", data);
+
+        renderPieChart(data);
+        calculateFinancialInsights(data);
+        updateCashFlowStatus(data); 
+        
+        if (typeof updateDonutTotal === "function") updateDonutTotal(data);
+
     } catch (err) {
-        console.error("Fetch failed or JSON is invalid:", err);
+        console.error("loadExpenseTotals failed:", err);
     }
 }
 
@@ -83,7 +91,6 @@ function fetchDashboardTotals() {
       })
       .catch(err => console.error("Error sa fetchDashboardTotals:", err));
 }
-
   async function syncDashboard() {
       try {
           const res = await fetch(`http://localhost:3000/api/monthly-stats/${user_id}`);
@@ -129,47 +136,53 @@ function fetchDashboardTotals() {
       .catch(err => console.error("Error starting money:", err));
   }
 
- async function fetchUserIncome() {
-      try {
-          const response = await fetch(`http://localhost:3000/income/${user_id}`);
-          const data = await response.json();
-          
-          if (data.status !== "success") return;
-          
-          const income = data.data[0] || {};
-          const salary = Number(income.salary || 0);
-          const freelance = Number(income.freelance || 0);
-          const net = Number(income.net_income || 0);
-          const start = Number(income.starting_money || 0);
-          
-          setIncome(salary, freelance, net, start);
-      } catch (err) {
-          console.error("Error income:", err);
-      }
-  }
+async function fetchUserIncome() {
+    if (!user_id) return;
+    try {
+        const res = await fetch(`http://localhost:3000/income-summary/${user_id}`);
+        const result = await res.json();
+        
+        if (result.status === "success") {
+            // DAPAT TUMUGMA ITO SA PAGKAKASUNOD-SUNOD: salary, freelance, business, starting
+            setIncome(
+                parseFloat(result.salary) || 0,
+                parseFloat(result.freelance) || 0,
+                parseFloat(result.business) || 0, // <--- Siguraduhin na 'business' ang tawag sa DB/API mo
+                parseFloat(result.starting) || 0  // <--- 'starting' o 'starting_money'
+            );
+        }
+    } catch (err) {
+        console.error("fetchUserIncome failed:", err);
+    }
+}
 
-  function setIncome(salary, freelance, net, starting = 0) {
+function setIncome(salary, freelance, net, starting = 0) {
+    // I-save sa global variable para magamit sa ibang calculations
     currentIncome = { salary, freelance, net, starting };
-    const formatPHP = (val) => Number(val).toLocaleString("en-PH", { style: "currency", currency: "PHP" });
-    const updateEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = formatPHP(val); };
+    
+    const formatPHP = (val) => Number(val).toLocaleString("en-PH", { 
+        style: "currency", 
+        currency: "PHP" 
+    });
 
-    if (incomeEls.starting) incomeEls.starting.textContent = formatPHP(starting);
-    if (incomeEls.salary) incomeEls.salary.textContent = formatPHP(salary);
-    if (incomeEls.freelance) incomeEls.freelance.textContent = formatPHP(freelance);
+    // 1. Update Business (Gamit ang ID mo na net_income)
     if (incomeEls.net) incomeEls.net.textContent = formatPHP(net);
 
-    updateEl("display-salary", salary);
-    updateEl("display-freelance", freelance);
-    updateEl("display-business", net);
+    // 2. Update Starting Money (Gamit ang ID mo na starting_money)
+    if (incomeEls.starting) incomeEls.starting.textContent = formatPHP(starting);
 
+    // 3. Update Salary at Freelance
+    if (incomeEls.salary) incomeEls.salary.textContent = formatPHP(salary);
+    if (incomeEls.freelance) incomeEls.freelance.textContent = formatPHP(freelance);
+
+    // 4. Tawagin ang total calculation
     updateMonthlyTotal();
-  }
+}
 
   function updateMonthlyTotal() {
     const total = currentIncome.starting + currentIncome.salary + currentIncome.freelance + currentIncome.net;
     if (incomeEls.monthly) incomeEls.monthly.textContent = total.toLocaleString("en-PH", { style: "currency", currency: "PHP" });
   }
-
 
   function refreshCurrentBalance() {
     fetch(`http://localhost:3000/balance/${user_id}`)
@@ -187,64 +200,47 @@ function fetchDashboardTotals() {
 // UI UPDATE WORKERS
 // ------------------------------
 function updateCashFlowStatus(expenseTotals = {}) {
-    if (Object.keys(expenseTotals).length === 0) {
-        console.warn("Skipping update: No expense data provided.");
-        return;
-    }
-
+    const monthlyIncome = (currentIncome.salary || 0) + (currentIncome.freelance || 0) + (currentIncome.net || 0) + (currentIncome.starting || 0);
+    
+    // 1. Calculate Total Expenses
     const categories = ["Rent", "Food", "Transport", "Shopping", "Bills", "Entertainment"];
-    
-    categories.forEach(cat => {
-        const amount = parseFloat(expenseTotals[cat] || 0);
-        const formatted = amount.toLocaleString("en-PH", { style: "currency", currency: "PHP" });
-        const el = document.getElementById(cat);
-        const legElBottom = document.getElementById(`leg-${cat}`);
-        if (el) el.textContent = formatted;
-        if (legElBottom) legElBottom.textContent = formatted;
-    });
+    const finalTotal = categories.reduce((sum, cat) => sum + (parseFloat(expenseTotals[cat]) || 0), 0);
 
-    let finalTotal; 
-    if (expenseTotals.totalFromDatabase !== undefined) {
-        finalTotal = parseFloat(expenseTotals.totalFromDatabase);
+    // 2. Update Expense Text and Bar
+    const expAmountEl = document.querySelector(".flow-amount.red");
+    const expBar = document.querySelector(".progress-fill.progress-red");
+    const expPctEl = document.querySelectorAll(".progress-pct")[0]; // Una sa listahan
+
+    if (finalTotal > 0) {
+        if (expAmountEl) expAmountEl.textContent = `₱${finalTotal.toLocaleString()}`;
+        if (expBar) {
+            const expPercent = Math.min((finalTotal / monthlyIncome) * 100, 100);
+            expBar.style.width = `${expPercent}%`;
+            expBar.style.display = "block";
+        }
+        if (expPctEl) expPctEl.textContent = `${((finalTotal / monthlyIncome) * 100).toFixed(0)}% of income`;
     } else {
-        finalTotal = categories.reduce((sum, cat) => sum + (parseFloat(expenseTotals[cat]) || 0), 0);
+        if (expAmountEl) expAmountEl.textContent = "₱";
+        if (expBar) expBar.style.display = "none";
     }
 
-    const totalEl = document.getElementById("total-expense-value");
-    if (totalEl) {
-        totalEl.textContent = finalTotal.toLocaleString("en-PH", { style: "currency", currency: "PHP" });
-    }
-
-    const monthlyIncome = expenseTotals.incomeFromDatabase || 
-                        (currentIncome.salary + currentIncome.freelance + currentIncome.net + (currentIncome.starting || 0));
-    
-    const savingsValue = monthlyIncome - finalTotal;
-
-    const savingsEl = document.getElementById("savings-value");
-    if (savingsEl) {
-        savingsEl.textContent = savingsValue.toLocaleString("en-PH", { style: "currency", currency: "PHP" });
-        savingsEl.style.color = savingsValue < 0 ? "#3b82f6" : ""; 
-    }
-
-    const expenseBar = document.querySelector(".progress-fill.progress-red");
-    if (monthlyIncome > 0 && expenseBar) {
-        const expPercent = Math.min((finalTotal / monthlyIncome) * 100, 100);
-        expenseBar.style.width = `${expPercent}%`;
-    }
-
+    // 3. Update Savings Text and Bar
+    const savingsAmount = monthlyIncome - finalTotal;
+    const savingsAmountEl = document.querySelector(".flow-amount.green");
     const savingsBar = document.querySelector(".progress-fill.progress-green");
-    if (monthlyIncome > 0 && savingsBar) {
-        const savingsPercent = Math.max(0, ((monthlyIncome - finalTotal) / monthlyIncome) * 100);
-        savingsBar.style.width = `${savingsPercent}%`;
-    }
+    const savingsPctEl = document.querySelectorAll(".progress-pct")[1]; // Pangalawa sa listahan
 
-    if (window.myBarChart) {
-        const expenseDatasetIndex = 1;
-        const dataset = window.myBarChart.data.datasets[expenseDatasetIndex].data;
-        const lastIndex = dataset.length - 1;
-        
-        dataset[lastIndex] = finalTotal;
-        window.myBarChart.update();
+    if (savingsAmount > 0) {
+        if (savingsAmountEl) savingsAmountEl.textContent = `₱${savingsAmount.toLocaleString()}`;
+        if (savingsBar) {
+            const savingsPercent = Math.max(0, (savingsAmount / monthlyIncome) * 100);
+            savingsBar.style.width = `${savingsPercent}%`;
+            savingsBar.style.display = "block";
+        }
+        if (savingsPctEl) savingsPctEl.textContent = `${((savingsAmount / monthlyIncome) * 100).toFixed(0)}% of income`;
+    } else {
+        if (savingsAmountEl) savingsAmountEl.textContent = "₱";
+        if (savingsBar) savingsBar.style.display = "none";
     }
 }
 
@@ -335,45 +331,60 @@ function updateCashFlowStatus(expenseTotals = {}) {
     if (label) label.textContent = `₱ ${total.toLocaleString()}`;
   }
 
-async function initCharts() {
-    const ctx = document.getElementById("mychart")?.getContext("2d");
-    if (!ctx) return;
+async function initCharts(month = null, year = null) {
+    const canvas = document.getElementById("mychart");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+
+    if (window.myBarChart) {
+        window.myBarChart.destroy();
+        window.myBarChart = null; 
+    }
 
     const userId = localStorage.getItem("user_id");
-    const response = await fetch(`http://localhost:3000/api/monthly-stats/${userId}`);
-    const dbData = await response.json(); 
+    const currentYear = year || new Date().getFullYear();
+    
+    let url = `http://localhost:3000/api/monthly-stats/${userId}?year=${currentYear}`;
+    if (month) {
+        url += `&month=${month}`; 
+    }
 
-    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec"];
+    try {
+        const response = await fetch(url);
+        const dbData = await response.json(); 
 
-    const labels = dbData.labels.map(label => {
-        const monthNum = parseInt(label.replace("Month ", "")); 
-        return monthNames[monthNum - 1];
-    });
+        if (!dbData.labels || dbData.labels.length === 0) {
+            console.warn("Walang data para sa chart sa period na ito.");
+            return;
+        }
 
-    const incomeData = dbData.income;
-    const expenseData = dbData.expenses;
+        let labels = dbData.labels;
+        if (!month) {
+            const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec"];
+            labels = dbData.labels.map(label => {
+                const monthNum = parseInt(label.replace("Month ", "")); 
+                return monthNames[monthNum - 1] || label;
+            });
+        }
 
-    if (myChartInstance) myChartInstance.destroy();
-
-    myChartInstance = new Chart(ctx, {
-        type: "bar",
-        data: {
-            labels: labels,
-            datasets: [
-                {
-                    label: "Income",
-                    data: incomeData,
-                    backgroundColor: "rgba(54, 162, 235, 0.5)"
-                },
-                {
-                    label: "Expenses",
-                    data: expenseData,
-                    backgroundColor: "rgba(255, 99, 132, 0.5)"
-                }
-            ]
-        },
-        options: { responsive: true }
-    });
+        window.myBarChart = new Chart(ctx, {
+            type: "bar",
+            data: {
+                labels: labels,
+                datasets: [
+                    { label: "Income", data: dbData.income, backgroundColor: "#3b82f6" },
+                    { label: "Expenses", data: dbData.expenses, backgroundColor: "#ef4444" }
+                ]
+            },
+            options: { 
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    } catch (err) {
+        console.error("Chart Error:", err);
+    }
 }
 
   // -----------------------------
@@ -422,36 +433,124 @@ async function initCharts() {
     }
   }
 
-  function initMonthDropdown(selection) {
-    const mapping = {
-      "Present": "present",
-      "Last Week": "week",
-      "Last Month": "month",
-      "Last 3 Months": "3months",
-      "This Year": "year"
-    };
-    const period = mapping[selection];
-    if (!period) return;
+async function filterByMonth(monthNumber) {
+    const monthNames = ["", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const monthName = monthNames[parseInt(monthNumber)];
+    const currentYear = new Date().getFullYear();
 
-    if (period === "present") {
-      fetchUserIncome();
-      loadExpenseTotals();
-    } else {
-      fetch(`http://localhost:3000/overview/month/${period}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.status === "success") {
-            const { income, balance, expenseTotals } = data.data;
-            setIncome(Number(income.salary), Number(income.freelance), Number(income.net_income));
+    const label = document.querySelector('.dropdown-label');
+    if (label) label.textContent = monthName;
+
+    try {
+        const res = await fetch(`http://localhost:3000/overview/filter/${monthNumber}?user_id=${user_id}&year=${currentYear}`);
+        const result = await res.json();
+
+        if (result.status === "success") {
+            const inc = result.income_details || {};
+            const exp = result.data || {}; 
+
+            const chartHeader = document.querySelector('.monthly-overview h3');
+            if (chartHeader) {
+                // Kung may monthNumber, halimbawa "January Overview", kung wala "Yearly Overview"
+                chartHeader.textContent = monthNumber ? `${monthName} Overview` : "Yearly Overview";
+            }
+
+            // Helper function para sa uniform formatting
+            const formatPHP = (val) => `₱${(parseFloat(val) || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+
+            // 1. UPDATE INCOME BOXES (Main Cards)
+            const totalInc = (parseFloat(inc.salary) || 0) + (parseFloat(inc.freelance) || 0) + (parseFloat(inc.net_income) || 0) + (parseFloat(inc.starting_money) || 0);
+            
+            // Update Global Variable for calculations
+            currentIncome = { 
+                salary: parseFloat(inc.salary) || 0, 
+                freelance: parseFloat(inc.freelance) || 0, 
+                net: parseFloat(inc.net_income) || 0, 
+                starting: parseFloat(inc.starting_money) || 0 
+            };
+
+            if (incomeEls.monthly) incomeEls.monthly.textContent = formatPHP(totalInc);
+            if (incomeEls.starting) incomeEls.starting.textContent = formatPHP(inc.starting_money);
+            if (incomeEls.salary) incomeEls.salary.textContent = formatPHP(inc.salary);
+            if (incomeEls.freelance) incomeEls.freelance.textContent = formatPHP(inc.freelance);
+            if (incomeEls.net) incomeEls.net.textContent = formatPHP(inc.net_income);
+
+            // 2. UPDATE SIDEBAR BREAKDOWN (Yung tinutukoy mong ₱200/₱100 labels)
+            const sideSalary = document.getElementById("salary");
+            const sideFreelance = document.getElementById("freelance");
+            const sideBusiness = document.getElementById("net_income");
+
+            if (sideSalary) sideSalary.textContent = formatPHP(inc.salary);
+            if (sideFreelance) sideFreelance.textContent = formatPHP(inc.freelance);
+            if (sideBusiness) sideBusiness.textContent = formatPHP(inc.net_income);
+
+            // 3. UPDATE BALANCE
             const balanceEl = document.getElementById("current_balance");
-            if (balanceEl) balanceEl.textContent = Number(balance).toLocaleString("en-PH", { style: "currency", currency: "PHP" });
-            renderPieChart(expenseTotals);
-            updateCashFlowStatus(expenseTotals);
-          }
-        })
-        .catch(err => console.error("Error fetching historical data:", err));
+            if (balanceEl) balanceEl.textContent = formatPHP(result.balance);
+
+            // 4. CALCULATE TOTALS FOR UI
+            const totalExpenses = Object.values(exp).reduce((a, b) => a + (parseFloat(b) || 0), 0);
+            const savingsAmount = totalInc - totalExpenses;
+            const savingsRate = totalInc > 0 ? (savingsAmount / totalInc) * 100 : 0;
+
+            // 5. PROGRESS BARS
+            const expAmtEl = document.getElementById("total-expense-value");
+            const expBar = document.querySelector(".progress-fill.progress-red");
+            const savingsAmtEl = document.getElementById("savings-value");
+            const savingsBar = document.querySelector(".progress-fill.progress-green");
+
+            if (expAmtEl) expAmtEl.textContent = formatPHP(totalExpenses);
+            if (expBar) expBar.style.width = `${Math.min((totalExpenses / (totalInc || 1)) * 100, 100)}%`;
+            
+            if (savingsAmtEl) savingsAmtEl.textContent = formatPHP(savingsAmount);
+            if (savingsBar) savingsBar.style.width = `${Math.max(0, savingsRate)}%`;
+
+            // 6. REFRESH CHARTS & INSIGHTS
+            initCharts(monthNumber, currentYear);
+            updateCashFlowStatus(exp);
+            renderPieChart(exp);
+            calculateFinancialInsights(exp);
+
+        } else {
+            resetDashboardToZero(); 
+        }
+    } catch (err) {
+        console.error("Error switching months:", err);
+        resetDashboardToZero();
     }
-  }
+}
+
+// --- ILAGAY ITO SA BABA NG MAIN.JS ---
+function resetDashboardToZero() {
+    // Income Box Reset (Main Cards)
+    const mainFields = ["monthly_income", "starting_money", "salary", "freelance", "net_income"];
+    mainFields.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = "₱0.00";
+    });
+
+    // Sidebar Breakdown Reset (Yung labels sa gilid)
+    const sideFields = ["salary", "freelance", "net_income"];
+    sideFields.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = "₱0.00";
+    });
+
+    // Stats Grid Reset
+    const stats = ["avg-daily-val", "savings-rate-val", "top-expense-val"];
+    stats.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = id.includes("rate") ? "0%" : (id.includes("top") ? "None" : "₱0.00");
+    });
+
+    // Cash Flow Text Reset
+    if (document.getElementById("total-expense-value")) document.getElementById("total-expense-value").textContent = "₱0.00";
+    if (document.getElementById("savings-value")) document.getElementById("savings-value").textContent = "₱0.00";
+
+    // Reset Charts & Bars
+    updateCashFlowStatus({});
+    renderPieChart({});
+}
 
   // -----------------------------
   // MODALS
@@ -638,30 +737,83 @@ function setupDeleteAccount() {
     // -----------------------------
     // TATLO SA BABA NG RIGHT
     // -----------------------------
-  function calculateFinancialInsights(totals) {
-      const categories = ["Rent", "Food", "Transport", "Shopping", "Bills", "Entertainment"];
-      
-      const totalExpenses = categories.reduce((sum, cat) => sum + (parseFloat(totals[cat]) || 0), 0);
-      
-      const dayOfMonth = new Date().getDate();
-      const avgDaily = totalExpenses / dayOfMonth;
-      
-      let topCat = "None";
-      let maxVal = 0;
-      categories.forEach(cat => {
-          if (parseFloat(totals[cat]) > maxVal) {
-              maxVal = parseFloat(totals[cat]);
-              topCat = cat;
-          }
-      });
+function calculateFinancialInsights(totals) {
+    console.log("DEBUG: Calculating insights with data:", totals);
 
-      const totalIncome = currentIncome.salary + currentIncome.freelance + currentIncome.net + currentIncome.starting;
-      const savingsRate = totalIncome > 0 ? ((totalIncome - totalExpenses) / totalIncome) * 100 : 0;
+    const categories = ["Rent", "Food", "Transport", "Shopping", "Bills", "Entertainment"];
+    
+    // 1. Total Expenses
+    const totalExpenses = categories.reduce((sum, cat) => sum + (parseFloat(totals[cat]) || 0), 0);
+    
+    // 2. Avg Daily
+    const dayOfMonth = new Date().getDate(); 
+    const avgDaily = totalExpenses / dayOfMonth;
+    
+    // 3. Top Expense
+    let topCat = "None";
+    let maxVal = 0;
+    categories.forEach(cat => {
+        const val = parseFloat(totals[cat]) || 0;
+        if (val > maxVal) {
+            maxVal = val;
+            topCat = cat;
+        }
+    });
 
-      document.getElementById("avg-daily-val").textContent = `₱ ${avgDaily.toFixed(2)}`;
-      document.getElementById("savings-rate-val").textContent = `${Math.max(0, savingsRate).toFixed(0)}%`;
-      document.getElementById("top-expense-val").textContent = `${topCat}`;
-  }
+    // 4. Savings Rate (Gamit ang currentIncome global variable)
+    const totalIncome = (currentIncome.salary || 0) + (currentIncome.freelance || 0) + (currentIncome.net || 0) + (currentIncome.starting || 0);
+    const savingsRate = totalIncome > 0 ? ((totalIncome - totalExpenses) / totalIncome) * 100 : 0;
+
+    // 5. UPDATE UI - Dito tayo mag-ingat sa IDs
+    const avgEl = document.getElementById("avg-daily-val");
+    const rateEl = document.getElementById("savings-rate-val");
+    const topEl = document.getElementById("top-expense-val");
+
+    if (avgEl) {
+        avgEl.textContent = `₱ ${avgDaily.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+    } else {
+        console.warn("MISSING HTML ID: avg-daily-val");
+    }
+
+    if (rateEl) {
+        rateEl.textContent = `${Math.max(0, savingsRate).toFixed(0)}%`;
+    } else {
+        console.warn("MISSING HTML ID: savings-rate-val");
+    }
+
+    if (topEl) {
+        topEl.textContent = topCat;
+    } else {
+        console.warn("MISSING HTML ID: top-expense-val");
+    }
+}
+
+//////////////////////////////
+// MONTHLY DROPDOWNNNNNNNNNNN
+//////////////////////////////
+function initMonthDropdown() {
+    const menu = document.getElementById("header-menu");
+    if (!menu) return;
+
+    menu.querySelectorAll(".drpdwn-option").forEach(link => {
+        link.onclick = async (e) => {
+            e.preventDefault();
+            
+            const monthNumber = link.getAttribute("data-month");
+            const monthName = link.textContent.trim();
+
+            if (monthNumber) {
+                console.log(`Filtering for: ${monthName}`);
+                await filterByMonth(monthNumber); 
+            } else {
+                const label = document.querySelector('.dropdown-label');
+                if (label) label.textContent = "View History";
+                initializeDashboard(); 
+            }
+        };
+    });
+}
+
   // -----------------------------
   // UTILITIES
   // -----------------------------
