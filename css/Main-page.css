@@ -534,7 +534,12 @@ html, body {
   place-items: center;
   padding: 1rem;
 }
-.modal-overlay[hidden] { display: none; }
+.modal-overlay[hidden], 
+#expenseModal[hidden], 
+#incomeModal[hidden],
+#logoutModal[hidden],
+#deleteModal[hidden] {
+    display: none !important;}
 .modal-backdrop {
   position: absolute;
   inset: 0;

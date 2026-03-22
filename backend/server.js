@@ -29,20 +29,23 @@ const db = mysql.createPool({
 ///////////////////////////
 // DASHBOARD TOTALS (FIXED)
 ///////////////////////////
-app.get("/dashboard-totals/:user_id", (req, res) => {
-    const { user_id } = req.params;
-    // Kukunin ang pinakabagong balance mula sa monthly table
-    const query = "SELECT current_balance FROM monthly WHERE user_id = ? ORDER BY id DESC LIMIT 1";
+app.get('/dashboard-totals/:user_id', (req, res) => {
+    const userId = req.params.user_id;
+    const { month, year } = req.query;
 
-    db.query(query, [user_id], (err, results) => {
-        if (err) {
-            console.error("Dashboard Error:", err);
-            return res.status(500).json({ error: err.message });
-        }
-        res.json({ 
-            status: "success", 
-            current_balance: results.length > 0 ? results[0].current_balance : 0 
-        });
+    // SQL query na may filter para sa specific month at year
+    const query = `
+        SELECT current_balance 
+        FROM monthly 
+        WHERE user_id = ? AND month = ? AND year = ? 
+        LIMIT 1`;
+
+    db.query(query, [userId, month, year], (err, results) => {
+        if (err) return res.status(500).json({ status: "error" });
+        
+        // Ipadala ang balance ng buwang iyon, o 0 kung walang nahanap
+        const balance = results.length > 0 ? results[0].current_balance : 0;
+        res.json({ status: "success", current_balance: balance });
     });
 });
 
@@ -144,7 +147,7 @@ app.post("/signup", async (req, res) => {
 
                     // Insert Income
                     await connection.promise().query(
-                        "INSERT INTO income (user_id, starting_money, salary, freelance, net_income, income_date) VALUES (?, ?, 0, 0, 0, ?)",
+                        "INSERT INTO income (user_id, starting_money, salary, freelance, business, income_date) VALUES (?, ?, 0, 0, 0, ?)",
                         [user_id, balance, now.toISOString().split("T")[0]]
                     );
 
@@ -229,7 +232,7 @@ app.post("/add-income/:user_id", (req, res) => {
     const { user_id } = req.params;
     const { source, amount } = req.body;
     const incomeAmount = parseFloat(amount) || 0;
-    const date = new Date().toISOString().split("T")[0];
+    
     const now = new Date();
     const currentMonth = now.getMonth() + 1;
     const currentYear = now.getFullYear();
@@ -238,10 +241,10 @@ app.post("/add-income/:user_id", (req, res) => {
     let freelance = source === "Freelance" ? incomeAmount : 0;
     let business = source === "Business" ? incomeAmount : 0;
 
-    const insertIncome = `INSERT INTO income (user_id, starting_money, salary, freelance, net_income, income_date) VALUES (?, 0, ?, ?, ?, ?)`;
+    const insertIncome = `INSERT INTO income (user_id, starting_money, salary, freelance, business, income_date) VALUES (?, 0, ?, ?, ?, NOW())`;
 
-    db.query(insertIncome, [user_id, salary, freelance, business, date], (err) => {
-        if (err) return res.status(500).json({ status: "error", message: "Income Insert Error: " + err.message });
+    db.query(insertIncome, [user_id, salary, freelance, business], (err) => {
+        if (err) return res.status(500).json({ status: "error", message: err.message });
 
         const updateMonthly = `
             UPDATE monthly 
@@ -250,13 +253,20 @@ app.post("/add-income/:user_id", (req, res) => {
             WHERE user_id = ? AND month = ? AND year = ?`;
         
         db.query(updateMonthly, [incomeAmount, incomeAmount, user_id, currentMonth, currentYear], (err2, result) => {
-            if (err2) return res.status(500).json({ status: "error", message: "Monthly Update Error: " + err2.message });
+            if (err2) return res.status(500).json({ status: "error", message: err2.message });
             
             if (result.affectedRows === 0) {
-                const createMonthly = `INSERT INTO monthly (user_id, month, year, month_income, current_balance, total_expense) VALUES (?, ?, ?, ?, ?, 0)`;
-                db.query(createMonthly, [user_id, currentMonth, currentYear, incomeAmount, incomeAmount], (err3) => {
-                    if (err3) return res.status(500).json({ status: "error", message: err3.message });
-                    res.json({ status: "success", message: "New monthly record created!" });
+                // Kunin ang huling balance bago mag-insert ng bago
+                const sqlGetLastBalance = `SELECT current_balance FROM monthly WHERE user_id = ? ORDER BY id DESC LIMIT 1`;
+                db.query(sqlGetLastBalance, [user_id], (err3, lastRes) => {
+                    const lastBalance = lastRes.length > 0 ? parseFloat(lastRes[0].current_balance) : 0;
+                    const newBalance = lastBalance + incomeAmount;
+
+                    const createMonthly = `INSERT INTO monthly (user_id, month, year, month_income, current_balance, total_expense) VALUES (?, ?, ?, ?, ?, 0)`;
+                    db.query(createMonthly, [user_id, currentMonth, currentYear, incomeAmount, newBalance], (err4) => {
+                        if (err4) return res.status(500).json({ status: "error", message: err4.message });
+                        res.json({ status: "success", message: "Income added and new monthly record created!" });
+                    });
                 });
             } else {
                 res.json({ status: "success", message: "Income added and balance updated!" });
@@ -272,7 +282,7 @@ app.get("/income-summary/:user_id", (req, res) => {
             SUM(starting_money) as total_starting,
             SUM(salary) as total_salary, 
             SUM(freelance) as total_freelance, 
-            SUM(net_income) as total_business 
+            SUM(business) as total_business 
         FROM income 
         WHERE user_id = ?`;
 
@@ -281,7 +291,7 @@ app.get("/income-summary/:user_id", (req, res) => {
         const data = results[0] || {};
         res.json({
             status: "success",
-            starting: parseFloat(data.total_starting) || 0,
+            starting_money: parseFloat(data.total_starting) || 0,
             salary: parseFloat(data.total_salary) || 0,
             freelance: parseFloat(data.total_freelance) || 0,
             business: parseFloat(data.total_business) || 0
@@ -290,39 +300,66 @@ app.get("/income-summary/:user_id", (req, res) => {
 });
 
 ///////////////////////////
-// EXPENSES SYSTEM
+// EXPENSES SYSTEM (UPDATED)
 ///////////////////////////
 app.post("/add-expense/:user_id", (req, res) => {
     const { user_id } = req.params;
     const { category, amount } = req.body;
     const expenseAmount = parseFloat(amount) || 0;
-    const date = new Date().toISOString().split("T")[0];
+    
+    // Kunin ang kasalukuyang Buwan at Taon sa JS
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1; // 1-12
+    const currentYear = now.getFullYear();
 
-    // I-map ang category sa tamang column name
-    let rent = category === "Rent" ? expenseAmount : 0;
-    let food = category === "Food" ? expenseAmount : 0;
-    let transport = category === "Transport" ? expenseAmount : 0;
-    let shopping = category === "Shopping" ? expenseAmount : 0;
-    let bills = category === "Bills" ? expenseAmount : 0;
-    let entertainment = category === "Entertainment" ? expenseAmount : 0;
+    // 1. I-insert ang transaction sa expenses table (History)
+    const sqlInsertExpense = `INSERT INTO expenses (user_id, category, amount, expense_date) VALUES (?, ?, ?, NOW())`;
+    
+    db.query(sqlInsertExpense, [user_id, category, expenseAmount], (err) => {
+        if (err) return res.status(500).json({ status: "error", message: "Expense Insert Error: " + err.message });
 
-    const sql = `INSERT INTO expenses (user_id, rent, food, transport, shopping, bills, entertainment, expense_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
-
-    db.query(sql, [user_id, rent, food, transport, shopping, bills, entertainment, date], (err) => {
-        if (err) return res.status(500).json({ status: "error", message: err.message });
-
-        // UPDATE monthly balance (Bawasan ang current_balance)
-        const updateMonthly = `UPDATE monthly SET current_balance = current_balance - ?, total_expense = total_expense + ? WHERE user_id = ? AND month = MONTH(CURRENT_DATE()) AND year = YEAR(CURRENT_DATE())`;
+        // 2. Subukan munang i-UPDATE ang existing monthly record
+        const sqlUpdateMonthly = `
+            UPDATE monthly 
+            SET current_balance = current_balance - ?, 
+                total_expense = total_expense + ? 
+            WHERE user_id = ? AND month = ? AND year = ?`;
         
-        db.query(updateMonthly, [expenseAmount, expenseAmount, user_id], (err2) => {
-            if (err2) return res.status(500).json({ status: "error", message: err2.message });
-            res.json({ status: "success", message: "Expense added!" });
+        db.query(sqlUpdateMonthly, [expenseAmount, expenseAmount, user_id, currentMonth, currentYear], (err2, result) => {
+            if (err2) return res.status(500).json({ status: "error", message: "Monthly Update Error: " + err2.message });
+            
+            // 3. Kung "0" ang affectedRows, ibig sabihin bagong buwan ito. Gawan ng bagong record.
+            if (result.affectedRows === 0) {
+                // Kukunin muna natin ang huling balance para ituloy sa bagong buwan (Optional but better)
+                const sqlGetLastBalance = `SELECT current_balance FROM monthly WHERE user_id = ? ORDER BY id DESC LIMIT 1`;
+                
+                db.query(sqlGetLastBalance, [user_id], (err3, lastRes) => {
+                    const lastBalance = lastRes.length > 0 ? parseFloat(lastRes[0].current_balance) : 0;
+                    const newBalance = lastBalance - expenseAmount;
+
+                    const sqlCreateMonthly = `
+                        INSERT INTO monthly (user_id, month, year, month_income, current_balance, total_expense) 
+                        VALUES (?, ?, ?, 0, ?, ?)`;
+                    
+                    db.query(sqlCreateMonthly, [user_id, currentMonth, currentYear, newBalance, expenseAmount], (err4) => {
+                        if (err4) return res.status(500).json({ status: "error", message: "Failed to create new month record: " + err4.message });
+                        res.json({ status: "success", message: "Expense added and new monthly record started!" });
+                    });
+                });
+            } else {
+                // Kung may na-update, success na agad!
+                res.json({ status: "success", message: "Expense added successfully!" });
+            }
         });
     });
 });
 
 app.get("/expenses-data/:user_id", (req, res) => {
     const { user_id } = req.params;
+    const { month, year } = req.query;
+
+    const targetMonth = month || (new Date().getMonth() + 1);
+    const targetYear = year || new Date().getFullYear();
 
     const sql = `
         SELECT 
@@ -333,36 +370,50 @@ app.get("/expenses-data/:user_id", (req, res) => {
             SUM(CASE WHEN category = 'Bills' THEN amount ELSE 0 END) as Bills,
             SUM(CASE WHEN category = 'Entertainment' THEN amount ELSE 0 END) as Entertainment
         FROM expenses 
-        WHERE user_id = ? AND MONTH(expense_date) = MONTH(CURRENT_DATE())`;
+        WHERE user_id = ? 
+          AND MONTH(expense_date) = ? 
+          AND YEAR(expense_date) = ?`;
 
-    db.query(sql, [user_id], (err, results) => {
-        if (err) {
-            console.error("SQL Error:", err.message);
-            return res.status(500).json({ status: "error", message: err.message });
-        }
+    db.query(sql, [user_id, targetMonth, targetYear], (err, results) => {
+        if (err) return res.status(500).json({ status: "error", message: err.message });
         
-        const data = results[0];
-        res.json({
+        // Mahalaga ito: Siguraduhin na may fallback object kung walang results[0]
+        const data = results[0] || {}; 
+        
+        // I-wrap natin sa response object para laging may valid numbers
+        const cleanData = {
             Rent: parseFloat(data.Rent) || 0,
             Food: parseFloat(data.Food) || 0,
             Transport: parseFloat(data.Transport) || 0,
             Shopping: parseFloat(data.Shopping) || 0,
             Bills: parseFloat(data.Bills) || 0,
             Entertainment: parseFloat(data.Entertainment) || 0
-        });
+        };
+
+        res.json(cleanData);
     });
 });
 
 app.get('/api/monthly-stats/:user_id', (req, res) => {
     const userId = req.params.user_id;
-    
-    const query = `
+    const { month, year } = req.query;
+
+    let query = `
         SELECT month, year, month_income, total_expense 
         FROM monthly 
-        WHERE user_id = ? 
-        ORDER BY year ASC, month ASC`;
+        WHERE user_id = ?`;
+    
+    let params = [userId];
 
-    db.query(query, [userId], (err, results) => {
+    // 2. Kung may pinasang month at year, i-filter ang SQL
+    if (month && year) {
+        query += ` AND month = ? AND year = ?`;
+        params.push(month, year);
+    }
+
+    query += ` ORDER BY year ASC, month ASC`;
+
+    db.query(query, params, (err, results) => {
         if (err) {
             console.error("SQL Error:", err);
             return res.status(500).json({ error: "Database error" });
@@ -379,26 +430,24 @@ app.get('/api/monthly-stats/:user_id', (req, res) => {
     });
 });
 
-app.get("/overview/filter/:period", (req, res) => {
-    const { period } = req.params; // Ito yung month number
-    const { user_id, year } = req.query; // Kunin ang year mula sa frontend
+///////////////////////////
+//  MONTH FILTER ROUTE
+///////////////////////////
+app.get("/overview/filter/:month", (req, res) => {
+    const month = req.params.month;
+    const { user_id, year } = req.query;
     const filterYear = year || new Date().getFullYear();
 
     if (!user_id) return res.status(400).json({ status: "error", message: "User ID required" });
 
-    // 1. Gawing dynamic ang Year at Month sa constraint
-    let timeConstraint = "AND MONTH(expense_date) = ? AND YEAR(expense_date) = ?";
-    let incomeConstraint = "AND MONTH(income_date) = ? AND YEAR(income_date) = ?";
-    let params = [user_id, period, filterYear];
-
-    // 2. Query para sa Expenses
+    // 1. Query para sa Expenses
     const expenseSql = `
         SELECT category, SUM(amount) as total 
         FROM expenses 
-        WHERE user_id = ? ${timeConstraint}
+        WHERE user_id = ? AND MONTH(expense_date) = ? AND YEAR(expense_date) = ?
         GROUP BY category`;
 
-    db.query(expenseSql, params, (err, expenseResults) => {
+    db.query(expenseSql, [user_id, month, filterYear], (err, expenseResults) => {
         if (err) return res.status(500).json({ status: "error", message: err.message });
 
         const expenseData = { Rent: 0, Food: 0, Transport: 0, Shopping: 0, Bills: 0, Entertainment: 0 };
@@ -406,91 +455,33 @@ app.get("/overview/filter/:period", (req, res) => {
             if (expenseData.hasOwnProperty(row.category)) expenseData[row.category] = parseFloat(row.total) || 0;
         });
 
-        // 3. Query para sa Income (DITO NATIN ISASAMA ANG STARTING_MONEY AT NET_INCOME)
+        // 2. Query para sa Income
         const incomeSql = `
             SELECT 
                 SUM(salary) as salary, 
                 SUM(freelance) as freelance, 
-                SUM(net_income) as net_income, 
+                SUM(business) as business, 
                 SUM(starting_money) as starting_money 
             FROM income 
-            WHERE user_id = ? ${incomeConstraint}`;
+            WHERE user_id = ? AND MONTH(income_date) = ? AND YEAR(income_date) = ?`;
 
-        db.query(incomeSql, params, (err, incomeResults) => {
+        db.query(incomeSql, [user_id, month, filterYear], (err, incomeResults) => {
             if (err) return res.status(500).json({ status: "error", message: err.message });
 
-            const inc = incomeResults[0] || { salary: 0, freelance: 0, net_income: 0, starting_money: 0 };
-
-            // 4. Kalkulahin ang Balance para sa Dashboard
+            const inc = incomeResults[0] || { salary: 0, freelance: 0, business: 0, starting_money: 0 };
+            
             const totalInc = (parseFloat(inc.salary) || 0) + 
                              (parseFloat(inc.freelance) || 0) + 
-                             (parseFloat(inc.net_income) || 0) + 
+                             (parseFloat(inc.business) || 0) + 
                              (parseFloat(inc.starting_money) || 0);
             
             const totalExp = Object.values(expenseData).reduce((a, b) => a + b, 0);
 
-            // 5. IBALIK LAHAT SA FRONTEND
             res.json({ 
                 status: "success", 
-                data: expenseData, 
                 income_details: inc, 
+                data: expenseData, 
                 balance: totalInc - totalExp 
-            });
-        });
-    });
-});
-
-
-///////////////////////////
-//  MONTH FILTER ROUTE
-///////////////////////////
-app.get("/overview/filter/:month", (req, res) => {
-    const month = req.params.month;
-    const user_id = req.query.user_id;
-
-    // 1. Query para sa Income
-    const incomeSql = `
-        SELECT 
-            SUM(salary) as salary, 
-            SUM(freelance) as freelance, 
-            SUM(business) as net_income, 
-            SUM(starting_money) as starting_money 
-        FROM monthly 
-        WHERE user_id = ? AND month_id = ?`;
-
-    // 2. Query para sa Expenses (Kailangan mo rin ito para sa Breakdown)
-    const expenseSql = `
-        SELECT category, SUM(amount) as total 
-        FROM expenses 
-        WHERE user_id = ? AND MONTH(expense_date) = ? 
-        GROUP BY category`;
-
-    db.query(incomeSql, [user_id, month], (err, incomeRows) => {
-        if (err) return res.json({ status: "error", message: "Income query failed" });
-
-        db.query(expenseSql, [user_id, month], (err, expenseRows) => {
-            if (err) return res.json({ status: "error", message: "Expense query failed" });
-
-            // I-format ang Expenses
-            const formattedExpenses = { Rent: 0, Food: 0, Transport: 0, Shopping: 0, Bills: 0, Entertainment: 0 };
-            expenseRows.forEach(row => {
-                if (formattedExpenses.hasOwnProperty(row.category)) {
-                    formattedExpenses[row.category] = parseFloat(row.total) || 0;
-                }
-            });
-
-            // I-compute ang total balance (Income - Total Expenses)
-            const inc = incomeRows[0] || {};
-            const totalInc = (parseFloat(inc.salary) || 0) + (parseFloat(inc.freelance) || 0) + (parseFloat(inc.net_income) || 0) + (parseFloat(inc.starting_money) || 0);
-            const totalExp = Object.values(formattedExpenses).reduce((a, b) => a + b, 0);
-            const currentBalance = totalInc - totalExp;
-
-            // ISAMA LAHAT SA RESPONSE
-            res.json({ 
-                status: "success", 
-                income_details: inc,    // Dito manggagaling yung Salary, Freelance, etc.
-                data: formattedExpenses, // Dito yung Rent, Food, etc.
-                balance: currentBalance  // Para sa Current Balance box
             });
         });
     });

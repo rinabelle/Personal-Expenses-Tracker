@@ -1,473 +1,455 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Peso Tracker</title>
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Peso Tracker</title>
     <link rel="stylesheet" href="css/Main-page.css">
     <link rel="icon" href="favicon.ico" type="image/x-icon">
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    
-</head>
-<body>
-  
-  <!--Headerrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr-->
-  <header class="TopHeader">
-    <div class="headerInner">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  </head>
 
-      <div class="brand">
-        <div class="brand-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"></path>
-              <path d="M3 5v14a2 2 0 0 0 2 2h16v-5"></path>
-              <path d="M18 12a2 2 0 0 0 0 4h4v-4Z"></path>
-            </svg>
-        </div>
-
-        <div>
-          <span class="brand-name">Peso Tracker</span>
-          <p class="greeting">
-            Hello, <span id="display-username"></span> &middot; <span id="current-date"></span>
-          </p>
-        </div>
-      </div>
-
-      <div class="dropdown">
-        <button class="dropdown-btn" id="header-dropdown" aria-expanded="false" aria-haspopup="listbox">
-          <span class="dropdown-label">View Present</span> <i class="fas fa-chevron-down"></i>
-            <svg class="chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="m6 9 6 6 6-6"></path>
-            </svg>
-        </button>
-        
-        <ul class="menu" id="header-menu" role="listbox" hidden>
-          <li class="drpdwn-option active" role="option">Present</li>
-          <li class="drpdwn-option" role="option" data-month="1">January</li>
-          <li class="drpdwn-option" role="option" data-month="2">February</li>
-          <li class="drpdwn-option" role="option" data-month="3">March</li>
-          <li class="drpdwn-option" role="option" data-month="4">April</li>
-          <li class="drpdwn-option" role="option" data-month="5">May</li>
-          <li class="drpdwn-option" role="option" data-month="6">June</li>
-          <li class="drpdwn-option" role="option" data-month="7">July</li>
-          <li class="drpdwn-option" role="option" data-month="8">August</li>
-          <li class="drpdwn-option" role="option" data-month="9">September</li>
-          <li class="drpdwn-option" role="option" data-month="10">October</li>
-          <li class="drpdwn-option" role="option" data-month="11">November</li>
-          <li class="drpdwn-option" role="option" data-month="12">December</li>
-        </ul>
-      </div>
-
-      <div class="header-actions">
-        <button class="profile-btn" id="openLogout" aria-label="Profile">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="8" r="4"></circle>
-            <path d="M20 21a8 8 0 1 0-16 0"></path>
-          </svg>
-        </button>
-
-        <button class="delete-btn" id="openDelete" aria-label="Delete">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 6h18"></path>
-            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
-            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-          </svg>
-        </button>
-      </div>
-    </div>
-
-  </header>
-
-  <main class="dashboard">
-    <div class="grid-dashboard">
-
-      <!--leftsideeeeeeeeeeeeeeeeeeeeeeeeeeeee-->
-      <section class="leftside">
-
-        <article class="card">
-          <header class="card-header">
-            <h2 class="cardName" id="income">Monthly Income</h2>
-              <svg class="icon-green" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="m23 6-9.5 9.5-5-5L1 18"></path>
-                <path d="M17 6h6v6"></path>
-              </svg>
-          </header>
-
-          <p class="card-value" id="monthly_income">&#8369; 0</p>          
-          <p class="card-date"></p>
-          <hr class="line"/>
-
-          <div class="income-sources">
-            <div>
-              <p class="source-lbl">Starting Money</p>
-              <p class="sourceValue" id="starting_money">&#8369; 0</p>            
-            </div>
-
-            <div>
-              <p class="source-lbl">Salary</p>
-              <p class="sourceValue" id="salary">&#8369; 0</p>            
-            </div>
-
-            <div>
-              <p class="source-lbl">Freelance</p>
-              <p class="sourceValue" id="freelance">&#8369; 0</p>
-            </div>
-
-            <div>
-              <p class="source-lbl">Business</p>
-              <p class="sourceValue" id="net_income">&#8369; 0</p>
-            </div>        
-          </div>
-        </article>
-
-        <article class="card">
-          <header class="card-header">
-            <h2 class="cardName" id="balance">Current Balance</h2>
+  <body>
+    <!-- Header -->
+    <header class="TopHeader">
+      <div class="headerInner">
+        <div class="brand">
+          <div class="brand-icon">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"></path>
-              <path d="M3 5v14a2 2 0 0 0 2 2h16v-5"></path>
-              <path d="M18 12a2 2 0 0 0 0 4h4v-4Z"></path>
-            </svg>
-          </header>
-
-          <p class="card-value" id="current_balance">&#8369; 0</p>
-          <p class="card-date"></p>
-          <hr class="line"/>
-
-          <div class="progress-row">
-            <div class="progress-track">
-              <div class="progress-fill progress-blue"></div>
-            </div>
-            <span class="progress-lbl">% saved</span>
+                <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"></path>
+                <path d="M3 5v14a2 2 0 0 0 2 2h16v-5"></path>
+                <path d="M18 12a2 2 0 0 0 0 4h4v-4Z"></path>
+              </svg>
           </div>
-        </article>
 
-        <article class="card">
-          <h2 class="cardName" id="cashflow">Cash flow Status</h2>
+          <div>
+            <span class="brand-name">Peso Tracker</span>
+            <p class="greeting">
+              Hello, <span id="display-username"></span> &middot; <span id="current-date"></span>
+            </p>
+          </div>
+        </div>
+
+        <div class="dropdown">
+          <button class="dropdown-btn" id="header-dropdown" aria-expanded="false" aria-haspopup="listbox">
+            <span class="dropdown-label">View Present</span> <i class="fas fa-chevron-down"></i>
+              <svg class="chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m6 9 6 6 6-6"></path>
+              </svg>
+          </button>
+
+          <ul class="menu" id="header-menu" role="listbox" hidden>
+            <li class="drpdwn-option active" role="option">Present</li>
+            <li class="drpdwn-option" role="option" data-month="1">January</li>
+            <li class="drpdwn-option" role="option" data-month="2">February</li>
+            <li class="drpdwn-option" role="option" data-month="3">March</li>
+            <li class="drpdwn-option" role="option" data-month="4">April</li>
+            <li class="drpdwn-option" role="option" data-month="5">May</li>
+            <li class="drpdwn-option" role="option" data-month="6">June</li>
+            <li class="drpdwn-option" role="option" data-month="7">July</li>
+            <li class="drpdwn-option" role="option" data-month="8">August</li>
+            <li class="drpdwn-option" role="option" data-month="9">September</li>
+            <li class="drpdwn-option" role="option" data-month="10">October</li>
+            <li class="drpdwn-option" role="option" data-month="11">November</li>
+            <li class="drpdwn-option" role="option" data-month="12">December</li>
+          </ul>
+        </div>
         
-          <div class="flow-item">
-            <div class="flow-row">
-              <div class="flow-lbl">
-                <svg class="icon-red" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="m23 18-9.5-9.5-5 5L1 6"></path>
-                  <path d="M17 18h6v-6"></path>
-                </svg>
-                <span>Expenses</span>
-              </div>
-                <span class="flow-amount red">&#8369; </span>
-            </div>
+        <div class="header-actions">
+          <button class="profile-btn" id="openLogout" aria-label="Profile">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="8" r="4"></circle>
+              <path d="M20 21a8 8 0 1 0-16 0"></path>
+            </svg>
+          </button>
 
-            <div class="progress-track">
-              <div class="progress-fill progress-red"> </div>
-            </div>
-            <p class="progress-pct">% of income</p>
-          </div>
+          <button class="delete-btn" id="openDelete" aria-label="Delete">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 6h18"></path>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
+              <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </header>
 
-          <div class="flow-item">
-            <div class="flow-row">
-              <div class="flow-lbl">
-                <svg class="icon-green" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <main class="dashboard">
+      <div class="grid-dashboard">
+        <!-- Left Side -->
+        <section class="leftside">
+          <article class="card">
+            <header class="card-header">
+              <h2 class="cardName" id="income">Monthly Income</h2>
+                <svg class="icon-green" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="m23 6-9.5 9.5-5-5L1 18"></path>
                   <path d="M17 6h6v6"></path>
                 </svg>
-                <span>Savings</span>
+            </header>
+
+            <p class="card-value" id="monthly_income">&#8369; 0</p>          
+            <p class="card-date"></p>
+            <hr class="line"/>
+
+            <div class="income-sources">
+              <div>
+                <p class="source-lbl">Starting Money</p>
+                <p class="sourceValue" id="starting_money">&#8369; 0</p>            
               </div>
-              <span class="flow-amount green" >&#8369;</span>
+
+              <div>
+                <p class="source-lbl">Salary</p>
+                <p class="sourceValue" id="salary">&#8369; 0</p>            
+              </div>
+
+              <div>
+                <p class="source-lbl">Freelance</p>
+                <p class="sourceValue" id="freelance">&#8369; 0</p>
+              </div>
+
+              <div>
+                <p class="source-lbl">Business</p>
+                <p class="sourceValue" id="business">&#8369; 0</p>
+              </div>        
             </div>
-            
-            <div class="progress-track">
-              <div class="progress-fill progress-green"></div>
+          </article>
+
+          <article class="card">
+            <header class="card-header">
+              <h2 class="cardName" id="balance">Current Balance</h2>
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"></path>
+                <path d="M3 5v14a2 2 0 0 0 2 2h16v-5"></path>
+                <path d="M18 12a2 2 0 0 0 0 4h4v-4Z"></path>
+              </svg>
+            </header>
+
+            <p class="card-value" id="current_balance">&#8369; 0</p>
+            <p class="card-date"></p>
+            <hr class="line"/>
+
+            <div class="progress-row">
+              <div class="progress-track">
+                <div class="progress-fill progress-blue"></div>
+              </div>
+              <span class="progress-lbl">% saved</span>
             </div>
-            <p class="progress-pct">% of income</p>
-          </div>
-        </article>
+          </article>
 
-        <article class="card">
-          <h2 class="cardName" id="transaction">Transaction Breakdown</h2>
-          <p class="section-lbl green">Income Sources</p>
+          <article class="card">
+            <h2 class="cardName" id="cashflow">Cash flow Status</h2>
+            <div class="flow-item">
+              <div class="flow-row">
+                <div class="flow-lbl">
+                  <svg class="icon-red" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m23 18-9.5-9.5-5 5L1 6"></path>
+                    <path d="M17 18h6v-6"></path>
+                  </svg>
+                  <span>Expenses</span>
+                </div>
+                  <span class="flow-amount red">&#8369; </span>
+              </div>
 
-          <ul class="txn-list">
-            <li class="txn-item">
-              <div class="txnName">Salary</div>
-              <span class="txn-amount" id="display-salary">₱ 0</span>
-            </li>
+              <div class="progress-track">
+                <div class="progress-fill progress-red"> </div>
+              </div>
+              <p class="progress-pct">% of income</p>
+            </div>
 
-            <li class="txn-item">
-              <div class="txnName">Freelance</div>
-              <span class="txn-amount" id="display-freelance">₱ 0</span>
-            </li>
+            <div class="flow-item">
+              <div class="flow-row">
+                <div class="flow-lbl">
+                  <svg class="icon-green" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m23 6-9.5 9.5-5-5L1 18"></path>
+                    <path d="M17 6h6v6"></path>
+                  </svg>
+                  <span>Savings</span>
+                </div>
+                <span class="flow-amount green" >&#8369;</span>
+              </div>
 
-            <li class="txn-item">
-              <div class="txnName">Business</div>
-              <span class="txn-amount" id="display-business">₱ 0</span>
-            </li>
-          </ul>
-          <hr class="line"/>
+              <div class="progress-track">
+                <div class="progress-fill progress-green"></div>
+              </div>
+              <p class="progress-pct">% of income</p>
+            </div>
+          </article>
 
-          <p class="section-lbl red">Expense Categories</p>
+          <article class="card">
+            <h2 class="cardName" id="transaction">Transaction Breakdown</h2>
+            <p class="section-lbl green">Income Sources</p>
+
             <ul class="txn-list">
               <li class="txn-item">
-                <div class="txnName">Rent</div>
-                <span class="txn-amount" id="Rent">₱ 0</span>
+                <div class="txnName">Salary</div>
+                <span class="txn-amount" id="display-salary">₱ 0</span>
               </li>
+
               <li class="txn-item">
-                <div class="txnName">Food</div>
-                <span class="txn-amount" id="Food">₱ 0</span>
+                <div class="txnName">Freelance</div>
+                <span class="txn-amount" id="display-freelance">₱ 0</span>
               </li>
+
               <li class="txn-item">
-                <div class="txnName">Transport</div>
-                <span class="txn-amount" id="Transport">₱ 0</span>
-              </li>
-              <li class="txn-item">
-                <div class="txnName">Shopping</div>
-                <span class="txn-amount" id="Shopping">₱ 0</span>
-              </li>
-              <li class="txn-item">
-                <div class="txnName">Bills</div>
-                <span class="txn-amount" id="Bills">₱ 0</span>
-              </li>
-              <li class="txn-item">
-                <div class="txnName">Entertainment</div>
-                <span class="txn-amount" id="Entertainment">₱ 0</span>
+                <div class="txnName">Business</div>
+                <span class="txn-amount" id="display-business">₱ 0</span>
               </li>
             </ul>
-        </article>
+            <hr class="line"/>
 
-        <div class="main-actions">
-          <button class="btn-expenses" id="openExpenses">Add Expenses</button>
-          <button class="btn-income" id="openIncome">Add Income</button>
-        </div>
+            <p class="section-lbl red">Expense Categories</p>
+              <ul class="txn-list">
+                <li class="txn-item">
+                  <div class="txnName">Rent</div>
+                  <span class="txn-amount" id="Rent">₱ 0</span>
+                </li>
 
-      </section>
+                <li class="txn-item">
+                  <div class="txnName">Food</div>
+                  <span class="txn-amount" id="Food">₱ 0</span>
+                </li>
 
-      <!--rightsideeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-->
-      <section class="rightside">
+                <li class="txn-item">
+                  <div class="txnName">Transport</div>
+                  <span class="txn-amount" id="Transport">₱ 0</span>
+                </li>
 
-        <article class="card">
-            <h2 class="cardName" id="expense-chart-title">Expense Breakdown</h2>
+                <li class="txn-item">
+                  <div class="txnName">Shopping</div>
+                  <span class="txn-amount" id="Shopping">₱ 0</span>
+                </li>
 
-              <div class="chart-layout">
-                <canvas id="pieChart" width="200" height="200"></canvas>
-              </div>
+                <li class="txn-item">
+                  <div class="txnName">Bills</div>
+                  <span class="txn-amount" id="Bills">₱ 0</span>
+                </li>
 
-              <div class="legend-item">
-                  <span class="dot dot-indigo"></span><span>Rent</span>
-                  <span class="legend-amount" id="leg-Rent">₱ 0</span>
-              </div>
+                <li class="txn-item">
+                  <div class="txnName">Entertainment</div>
+                  <span class="txn-amount" id="Entertainment">₱ 0</span>
+                </li>
+              </ul>
+          </article>
 
-              <div class="legend-item">
-                  <span class="dot dot-rose"></span><span>Food</span>
-                  <span class="legend-amount" id="leg-Food">₱ 0</span>
-              </div>
-
-              <div class="legend-item">
-                  <span class="dot dot-emerald"></span><span>Transport</span>
-                  <span class="legend-amount" id="leg-Transport">₱ 0</span>
-              </div>
-
-              <div class="legend-item">
-                  <span class="dot dot-yellow"></span><span>Shopping</span>
-                  <span class="legend-amount" id="leg-Shopping">₱ 0</span>
-              </div>
-
-              <div class="legend-item">
-                  <span class="dot dot-orange"></span><span>Bills</span>
-                  <span class="legend-amount" id="leg-Bills">₱ 0</span>
-              </div>
-
-              <div class="legend-item">
-                  <span class="dot dot-purple"></span><span>Entertainment</span>
-                  <span class="legend-amount" id="leg-Entertainment">₱ 0</span>
-              </div>
-
-            <div class="total-expense-footer" style="display: flex; justify-content: space-between; border-top: 1px solid #334; padding-top: 10px;">
-                <span >Total Expenses:</span>
-                <span id="total-expense-value">₱ 0.00</span>
-            </div>
-        </article>
-
-        <article class="card card-grow">
-          <header class="card-header">
-            <h2 class="cardName" id="overview">Monthly Overview</h2>
-            
-            <div class="chart-legend-inline">
-              <span class="dot dot-blue"></span><span>Income</span>
-              <span class="dot dot-red"></span><span>Expenses</span>
-            </div>
-          </header>
-
-          <div class="chart-container" style="position: relative; height: 300px; width: 100%;">
-            <canvas id="mychart"></canvas>
+          <div class="main-actions">
+            <button class="btn-expenses" id="openExpenses">Add Expenses</button>
+            <button class="btn-income" id="openIncome">Add Income</button>
           </div>
-        </article>
+        </section>
 
-        <div class="stats-grid" role="region">
-          <article class="card stat-card">
-            <h3 class="stat-lbl" id="stat-daily">Avg Daily</h3>
-            <p class="stat-value white" id="avg-daily-val">&#8369;</p>
-            <p class="stat-sub">spending</p>
+        <!-- Right Side -->
+        <section class="rightside">
+          <article class="card">
+              <h2 class="cardName" id="expense-chart-title">Expense Breakdown</h2>
+                <div class="chart-layout">
+                  <canvas id="pieChart" width="200" height="200"></canvas>
+                </div>
+
+                <div class="legend-item">
+                    <span class="dot dot-indigo"></span><span>Rent</span>
+                    <span class="legend-amount" id="leg-Rent">₱ 0</span>
+                </div>
+
+                <div class="legend-item">
+                    <span class="dot dot-rose"></span><span>Food</span>
+                    <span class="legend-amount" id="leg-Food">₱ 0</span>
+                </div>
+
+                <div class="legend-item">
+                    <span class="dot dot-emerald"></span><span>Transport</span>
+                    <span class="legend-amount" id="leg-Transport">₱ 0</span>
+                </div>
+
+                <div class="legend-item">
+                    <span class="dot dot-yellow"></span><span>Shopping</span>
+                    <span class="legend-amount" id="leg-Shopping">₱ 0</span>
+                </div>
+
+                <div class="legend-item">
+                    <span class="dot dot-orange"></span><span>Bills</span>
+                    <span class="legend-amount" id="leg-Bills">₱ 0</span>
+                </div>
+
+                <div class="legend-item">
+                    <span class="dot dot-purple"></span><span>Entertainment</span>
+                    <span class="legend-amount" id="leg-Entertainment">₱ 0</span>
+                </div>
+
+              <div class="total-expense-footer" style="display: flex; justify-content: space-between; border-top: 1px solid #334; padding-top: 10px;">
+                  <span >Total Expenses:</span>
+                  <span id="total-expense-value">₱ 0.00</span>
+              </div>
           </article>
 
-          <article class="card stat-card">
-            <h3 class="stat-lbl" id="stat-savings">Savings Rate</h3>
-            <p class="stat-value green" id="savings-rate-val">%</p>
-            <p class="stat-sub">of income</p>
+          <article class="card card-grow">
+            <header class="card-header">
+              <h2 class="cardName" id="overview">Monthly Overview</h2>
+              <div class="chart-legend-inline">
+                <span class="dot dot-blue"></span><span>Income</span>
+                <span class="dot dot-red"></span><span>Expenses</span>
+              </div>
+            </header>
+
+            <div class="chart-container" style="position: relative; height: 300px; width: 100%;">
+              <canvas id="mychart"></canvas>
+            </div>
           </article>
 
-          <article class="card stat-card">
-            <h3 class="stat-lbl" id="stat-top">Top Expense</h3>
-            <p class="stat-value blue" id="top-expense-val">&#8369;</p>
-          </article>
-        </div>
+          <div class="stats-grid" role="region">
+            <article class="card stat-card">
+              <h3 class="stat-lbl" id="stat-daily">Avg Daily</h3>
+              <p class="stat-value white" id="avg-daily-val">&#8369;</p>
+              <p class="stat-sub">spending</p>
+            </article>
 
-      </section>
-    </div>
-  </main>
+            <article class="card stat-card">
+              <h3 class="stat-lbl" id="stat-savings">Savings Rate</h3>
+              <p class="stat-value green" id="savings-rate-val">%</p>
+              <p class="stat-sub">of income</p>
+            </article>
 
-    <!-- LOGOUT MODAL -->
-    <div class="modal-overlay" id="logoutModal" hidden>
-      <div class="modal-backdrop"></div>
+            <article class="card stat-card">
+              <h3 class="stat-lbl" id="stat-top">Top Expense</h3>
+              <p class="stat-value blue" id="top-expense-val">&#8369;</p>
+            </article>
+          </div>
+        </section>
+      </div>
+    </main>
 
-      <dialog class="modal" open>
-        <div class="modal-icon modal-icon--blue">
-          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-            <polyline points="16 17 21 12 16 7"></polyline>
-            <line x1="21" y1="12" x2="9" y2="12"></line>
-          </svg>
-        </div>
+      <!-- LOGOUT MODAL -->
+      <div class="modal-overlay" id="logoutModal" hidden>
+        <div class="modal-backdrop"></div>
+        <dialog class="modal">
+          <div class="modal-icon modal-icon--blue">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+          </div>
 
-        <h2 class="modal-title">Log Out</h2>
-        <p class="modal-text">Do you want to log out?</p>
+          <h2 class="modal-title">Log Out</h2>
+          <p class="modal-text">Do you want to log out?</p>
 
-        <div class="modal-actions">
-          <button class="modal-btn modal-btn--cancel" id="cancelLogout">Cancel</button>
-          <button class="modal-btn modal-btn--blue" id="confirmLogout">Log Out</button>
-        </div>
-      </dialog>
-    </div>
+          <div class="modal-actions">
+            <button class="modal-btn modal-btn--cancel" id="cancelLogout">Cancel</button>
+            <button class="modal-btn modal-btn--blue" id="confirmLogout">Log Out</button>
+          </div>
+        </dialog>
+      </div>
 
-
-    <!-- DELETE MODAL -->
-    <div class="modal-overlay" id="deleteModal" hidden>
-      <div class="modal-backdrop"></div>
-
-      <dialog class="modal" open>
-        <div class="modal-icon modal-icon--red">
-          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
-            <line x1="12" y1="9" x2="12" y2="13"></line>
-            <line x1="12" y1="17" x2="12.01" y2="17"></line>
-          </svg>
-        </div>
-
-        <h2 class="modal-title">Delete Account</h2>
-        <p class="modal-text">Do you want to delete your account? This action cannot be undone.</p>
-
-        <div class="modal-actions">
-          <button class="modal-btn modal-btn--cancel" id="cancelDelete">Cancel</button>
-          <button class="modal-btn modal-btn--red" id="confirmDelete">Delete Account</button>
-        </div>
-      </dialog>
-    </div>
-
-   <!--Add Expenses Modalllll-->
-      <section id="expenseModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="expense-title" hidden>
+      <!-- DELETE MODAL -->
+      <div class="modal-overlay" id="deleteModal" hidden>
         <div class="modal-backdrop"></div>
 
-        <div class="modal">
+        <dialog class="modal">
+          <div class="modal-icon modal-icon--red">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+          </div>
 
-          <header class="modal-header">
-            <h2 id="expense-title" class="modal-title">Add Expense</h2>
-          </header>
+          <h2 class="modal-title">Delete Account</h2>
+          <p class="modal-text">Do you want to delete your account? This action cannot be undone.</p>
 
-          <form class="modal-body">
+          <div class="modal-actions">
+            <button class="modal-btn modal-btn--cancel" id="cancelDelete">Cancel</button>
+            <button class="modal-btn modal-btn--red" id="confirmDelete">Delete Account</button>
+          </div>
+        </dialog>
+      </div>
 
-            <div class="form-group">
-              <div class="drpdown">
-                <label for="expenses-dropdown">Expense Category</label>
+    <!-- Add Expenses Modal -->
+        <section id="expenseModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="expense-title" hidden>
+          <div class="modal-backdrop"></div>
+          <div class="modal">
+            <header class="modal-header">
+              <h2 id="expense-title" class="modal-title">Add Expense</h2>
+            </header>
 
-                <button class="drpdwnBtn" id="expenses-dropdown" aria-expanded="false" aria-haspopup="listbox">
-                  <span class="dropdown-label">Select category</span>
-                  <svg class="chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="m6 9 6 6 6-6"></path>
-                  </svg>
-                </button>
+            <form class="modal-body">
+              <div class="form-group">
+                <div class="drpdown">
+                  <label for="expenses-dropdown">Expense Category</label>
+                  <button class="drpdwnBtn" id="expenses-dropdown" aria-expanded="false" aria-haspopup="listbox">
+                    <span class="dropdown-label">Select category</span>
+                    <svg class="chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="m6 9 6 6 6-6"></path>
+                    </svg>
+                  </button>
 
-                <ul class="menu" id="expenses-menu" role="listbox" hidden>
-                  <li class="drpdwn-option active" role="option">Select</li>
-                  <li class="drpdwn-option" role="option">Rent</li>
-                  <li class="drpdwn-option" role="option">Food</li>
-                  <li class="drpdwn-option" role="option">Transport</li>
-                  <li class="drpdwn-option" role="option">Shopping</li>
-                  <li class="drpdwn-option" role="option">Bills</li>
-                  <li class="drpdwn-option" role="option">Entertainment</li>
-                </ul>
+                  <ul class="menu" id="expenses-menu" role="listbox" hidden>
+                    <li class="drpdwn-option active" role="option">Select</li>
+                    <li class="drpdwn-option" role="option">Rent</li>
+                    <li class="drpdwn-option" role="option">Food</li>
+                    <li class="drpdwn-option" role="option">Transport</li>
+                    <li class="drpdwn-option" role="option">Shopping</li>
+                    <li class="drpdwn-option" role="option">Bills</li>
+                    <li class="drpdwn-option" role="option">Entertainment</li>
+                  </ul>
+                </div>
+
+                <div class="form-amount">
+                  <label for="expense-amount">Amount</label>
+                  <input type="number" id="expense-amount" placeholder="Enter amount">
+                </div>
               </div>
 
-              <div class="form-amount">
-                <label for="expense-amount">Amount</label>
-                <input type="number" id="expense-amount" placeholder="Enter amount">
+              <footer class="modal-actions">
+                <button class="modal-btn modal-btn--cancel" id="cancelExpense">Cancel</button>
+                <button class="modal-btn modal-btn--blue" id="saveExpense">Save</button>
+              </footer>
+
+            </form>
+          </div>
+        </section>
+
+        <!-- ADD INCOME MODAL -->
+        <section id="incomeModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="income-title" hidden>
+          <div class="modal-backdrop"></div>
+          <div class="modal" >
+            <header class="modal-header">
+              <h2 id="income-title" class="modal-title">Add Income</h2>
+            </header>
+
+            <form class="modal-body">
+              <div class="form-group">
+                <label for="income-dropdown">Income Type</label>
+                <div class="drpdown">
+                  <button id="income-dropdown" class="drpdwnBtn" aria-expanded="false" aria-haspopup="listbox">
+                    <span class="dropdown-label">Select type</span>
+                    <svg class="chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="m6 9 6 6 6-6"></path>
+                    </svg>
+                  </button>
+
+                  <ul id="income-menu" class="menu" role="listbox" hidden>
+                    <li class="drpdwn-option active" role="option">Select</li>
+                    <li class="drpdwn-option" role="option">Salary</li>
+                    <li class="drpdwn-option" role="option">Freelance</li>
+                    <li class="drpdwn-option" role="option">Business</li>
+                  </ul>
+                </div>
+
+                <div class="form-amount">
+                  <label for="income-amount">Amount</label>
+                  <input type="number" id="income-amount" placeholder="Enter amount">
+                </div>
               </div>
-            </div>
 
-            <footer class="modal-actions">
-              <button class="modal-btn modal-btn--cancel" id="cancelExpense">Cancel</button>
-              <button class="modal-btn modal-btn--blue" id="saveExpense">Save</button>
-            </footer>
+              <footer class="modal-actions">
+                <button class="modal-btn modal-btn--cancel" id="cancelIncome">Cancel</button>
+                <button class="modal-btn modal-btn--blue" id="saveIncome">Save</button>
+              </footer>
+            </form>
+          </div>
+        </section>
 
-          </form>
-        </div>
-      </section>
-
-      <!-- ADD INCOME MODAL -->
-      <section id="incomeModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="income-title" hidden>
-        <div class="modal-backdrop"></div>
-
-        <div class="modal">
-
-          <header class="modal-header">
-            <h2 id="income-title" class="modal-title">Add Income</h2>
-          </header>
-
-          <form class="modal-body">
-
-            <div class="form-group">
-              <label for="income-dropdown">Income Type</label>
-
-              <div class="drpdown">
-                <button id="income-dropdown" class="drpdwnBtn" aria-expanded="false" aria-haspopup="listbox">
-                  <span class="dropdown-label">Select type</span>
-
-                  <svg class="chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="m6 9 6 6 6-6"></path>
-                  </svg>
-                </button>
-
-                <ul id="income-menu" class="menu" role="listbox" hidden>
-                  <li class="drpdwn-option active" role="option">Select</li>
-                  <li class="drpdwn-option" role="option">Salary</li>
-                  <li class="drpdwn-option" role="option">Freelance</li>
-                  <li class="drpdwn-option" role="option">Business</li>
-                </ul>
-              </div>
-              <div class="form-amount">
-                <label for="income-amount">Amount</label>
-                <input type="number" id="income-amount" placeholder="Enter amount">
-              </div>
-            </div>
-
-            <footer class="modal-actions">
-              <button class="modal-btn modal-btn--cancel" id="cancelIncome">Cancel</button>
-              <button class="modal-btn modal-btn--blue" id="saveIncome">Save</button>
-            </footer>
-
-          </form>
-        </div>
-      </section>
-
-<script src="js/chart.js"></script>
-<script src="js/main.js"></script>
-</body>
-</html> 
+  <script src="js/chart.js"></script>
+  <script src="js/main.js"></script>
+  </body>
+  </html>
