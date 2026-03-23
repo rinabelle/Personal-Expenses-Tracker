@@ -25,13 +25,21 @@ document.addEventListener("DOMContentLoaded", async () => {
     setupAllModals();
     setupDropdowns();
 
-    await initializeDashboard(); 
+    // 1. Kunin ang current month (3)
+    const currentMonth = new Date().getMonth() + 1;
+
+    // 2. Tawagin ang filterByMonth para mag-load lahat agad
+    await filterByMonth(currentMonth); 
+    
+    // 3. (Optional) Kung may ibang ginagawa ang initializeDashboard 
+    // na hindi related sa data (like animations), itira mo siya:
+    //await initializeDashboard(); 
 });
 
     async function initializeDashboard() {
         console.log("Initializing Dashboard...");
         try {
-            fetchDashboardTotals();
+            //fetchDashboardTotals();
             await fetchUserIncome();
             await loadExpenseTotals();
         } catch (err) {
@@ -91,7 +99,7 @@ async function loadExpenseTotals(selectedMonth = null) {
         console.error("Dashboard Sync Error:", err);
     }
 }
-
+/*
   async function fetchDashboardTotals(selectedMonth = null) {
         const user_id = localStorage.getItem("user_id"); 
         
@@ -118,6 +126,7 @@ async function loadExpenseTotals(selectedMonth = null) {
         })
         .catch(err => console.error("Error sa fetchDashboardTotals:", err));
     }
+*/
 
 fetch(`http://localhost:3000/expenses-data/${user_id}`)
     .then(res => res.json())
@@ -412,48 +421,62 @@ async function initCharts(month = null, year = null) {
   // -----------------------------
   // DROPDOWNS & MONTH SELECT
   // -----------------------------
-  function setupDropdowns() {
-    setupDropdown("expenses-dropdown", "expenses-menu", "cancelExpense", (selection) => {});
-    setupDropdown("income-dropdown", "income-menu", "cancelIncome", (selection) => {});
-    setupDropdown("header-dropdown", "header-menu", null, initMonthDropdown);
-  }
+function setupDropdown(btnId, menuId, cancelBtnId = null, onSelect = null) {
+  const btn = document.getElementById(btnId);
+  const menu = document.getElementById(menuId);
+  if (!btn || !menu) return;
 
-  function setupDropdown(btnId, menuId, cancelBtnId = null, onSelect = null) {
-    const btn = document.getElementById(btnId);
-    const menu = document.getElementById(menuId);
-    if (!btn || !menu) return;
+  const label = btn.querySelector(".dropdown-label");
+  const chevron = btn.querySelector(".chevron");
 
-    const label = btn.querySelector(".dropdown-label");
-    const chevron = btn.querySelector(".chevron");
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    const isNowHidden = !menu.hidden;
+    menu.hidden = isNowHidden;
+    btn.setAttribute("aria-expanded", String(!isNowHidden));
+    if (chevron) chevron.style.transform = !isNowHidden ? "rotate(180deg)" : "";
+  });
 
-    btn.addEventListener("click", (e) => {
-      e.preventDefault();
-      const isNowHidden = !menu.hidden;
-      menu.hidden = isNowHidden;
-      btn.setAttribute("aria-expanded", String(!isNowHidden));
-      if (chevron) chevron.style.transform = !isNowHidden ? "rotate(180deg)" : "";
+  menu.querySelectorAll(".drpdwn-option").forEach(opt => {
+    opt.addEventListener("click", () => {
+      menu.querySelectorAll(".drpdwn-option").forEach(o => o.classList.remove("active"));
+      opt.classList.add("active");
+      
+      const selectionText = opt.textContent.trim();
+      if (label) label.textContent = selectionText;
+
+      // Importante: Ipapasa natin ang 'opt' para makuha ang data-month
+      if (onSelect) onSelect(selectionText, opt); 
+
+      menu.hidden = true;
+      btn.setAttribute("aria-expanded", "false");
+      if (chevron) chevron.style.transform = "";
     });
+  });
+}
 
-    menu.querySelectorAll(".drpdwn-option").forEach(opt => {
-      opt.addEventListener("click", () => {
-        menu.querySelectorAll(".drpdwn-option").forEach(o => o.classList.remove("active"));
-        opt.classList.add("active");
-        if (label) label.textContent = opt.textContent.trim();
-        if (onSelect) onSelect(opt.textContent.trim());
-        menu.hidden = true;
-        btn.setAttribute("aria-expanded", "false");
-        if (chevron) chevron.style.transform = "";
-      });
-    });
+function setupDropdowns() {
+  // 1. Expenses
+  setupDropdown("expenses-dropdown", "expenses-menu", "cancelExpense", (selection) => {});
+  
+  // 2. Income
+  setupDropdown("income-dropdown", "income-menu", "cancelIncome", (selection) => {});
 
-    if (cancelBtnId) {
-      document.getElementById(cancelBtnId)?.addEventListener("click", () => {
-        menu.hidden = true;
-        btn.setAttribute("aria-expanded", "false");
-        if (chevron) chevron.style.transform = "";
-      });
+  // 3. Header (Month Filter)
+  setupDropdown("header-dropdown", "header-menu", null, async (selection, opt) => {
+    let monthNumber = opt.getAttribute("data-month");
+
+    // Logic para sa "Present"
+    if (selection === "Present" || !monthNumber) {
+      monthNumber = new Date().getMonth() + 1;
     }
-  }
+
+    console.log(`Action: Switch to Month ${monthNumber}`);
+    
+    // TAWAGIN ANG FILTER (One-click fix!)
+    await filterByMonth(monthNumber);
+  });
+}
 
 async function filterByMonth(monthNumber) {
     const monthNames = ["", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -461,6 +484,8 @@ async function filterByMonth(monthNumber) {
     const currentYear = new Date().getFullYear();
 
     const label = document.querySelector('.dropdown-label');
+    const currentBalanceEl = document.getElementById("current_balance"); 
+
     if (label) label.textContent = monthName;
 
     try {
@@ -473,17 +498,15 @@ async function filterByMonth(monthNumber) {
 
             const chartHeader = document.querySelector('.monthly-overview h3');
             if (chartHeader) {
-                // Kung may monthNumber, halimbawa "January Overview", kung wala "Yearly Overview"
                 chartHeader.textContent = monthNumber ? `${monthName} Overview` : "Yearly Overview";
             }
 
             // Helper function para sa uniform formatting
             const formatPHP = (val) => `₱${(parseFloat(val) || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
 
-            // 1. UPDATE INCOME BOXES (Main Cards)
+            // 1. UPDATE INCOME BOXES
             const totalInc = (parseFloat(inc.salary) || 0) + (parseFloat(inc.freelance) || 0) + (parseFloat(inc.business) || 0) + (parseFloat(inc.starting_money) || 0);
             
-            // Update Global Variable for calculations
             currentIncome = { 
                 salary: parseFloat(inc.salary) || 0, 
                 freelance: parseFloat(inc.freelance) || 0, 
@@ -497,35 +520,27 @@ async function filterByMonth(monthNumber) {
             if (incomeEls.freelance) incomeEls.freelance.textContent = formatPHP(inc.freelance);
             if (incomeEls.business) incomeEls.business.textContent = formatPHP(inc.business);
 
-            // 2. UPDATE TRANSACTION BREAKDOWN LIST (Rent, Food, etc.)
+            // 2. UPDATE TRANSACTION BREAKDOWN LIST
             const categories = ["Rent", "Food", "Transport", "Shopping", "Bills", "Entertainment"];
             categories.forEach(cat => {
-                const val = exp[cat] || 0; // Kukunin ang value mula sa 'result.data'
+                const val = exp[cat] || 0;
                 const element = document.getElementById(cat);
                 const legElement = document.getElementById(`leg-${cat}`);
-
-                if (element) {
-                    element.textContent = formatPHP(val);
-                }
-                if (legElement) {
-                    legElement.textContent = formatPHP(val);
-                }
+                if (element) element.textContent = formatPHP(val);
+                if (legElement) legElement.textContent = formatPHP(val);
             });
 
-            // 3. UPDATE INCOME SOURCES LIST (Salary, Freelance, Business sa baba)
-            if (document.getElementById("display-salary")) 
-                document.getElementById("display-salary").textContent = formatPHP(inc.salary);
-            if (document.getElementById("display-freelance")) 
-                document.getElementById("display-freelance").textContent = formatPHP(inc.freelance);
-            if (document.getElementById("display-business")) 
-                document.getElementById("display-business").textContent = formatPHP(inc.business);
+            // 3. UPDATE INCOME SOURCES LIST
+            if (document.getElementById("display-salary")) document.getElementById("display-salary").textContent = formatPHP(inc.salary);
+            if (document.getElementById("display-freelance")) document.getElementById("display-freelance").textContent = formatPHP(inc.freelance);
+            if (document.getElementById("display-business")) document.getElementById("display-business").textContent = formatPHP(inc.business);
 
-            // 4. CALCULATE TOTALS FOR UI
+            // 4. CALCULATE TOTALS
             const totalExpenses = Object.values(exp).reduce((a, b) => a + (parseFloat(b) || 0), 0);
             const savingsAmount = totalInc - totalExpenses;
             const savingsRate = totalInc > 0 ? (savingsAmount / totalInc) * 100 : 0;
 
-            // 5. PROGRESS BARS
+            // 5. UPDATE PROGRESS BARS (In-page mini cards)
             const expAmtEl = document.getElementById("total-expense-value");
             const expBar = document.querySelector(".progress-fill.progress-red");
             const savingsAmtEl = document.getElementById("savings-value");
@@ -533,16 +548,25 @@ async function filterByMonth(monthNumber) {
 
             if (expAmtEl) expAmtEl.textContent = formatPHP(totalExpenses);
             if (expBar) expBar.style.width = `${Math.min((totalExpenses / (totalInc || 1)) * 100, 100)}%`;
-            
             if (savingsAmtEl) savingsAmtEl.textContent = formatPHP(savingsAmount);
             if (savingsBar) savingsBar.style.width = `${Math.max(0, savingsRate)}%`;
 
-            // 6. REFRESH CHARTS & INSIGHTS
+            // 6. REFRESH CHARTS & INSIGHTS (Ito yung mga pwedeng mag-reset ng UI)
             initCharts(monthNumber, currentYear);
-            updateMonthlyOverview(monthNumber); // <--- Siguraduhing naipapasa ang monthNumber
+            updateMonthlyOverview(monthNumber);
             updateCashFlowStatus(exp);
             renderPieChart(exp);
             calculateFinancialInsights(exp);
+
+            // 7. FINAL UI UPDATE: HULING MAGSASALITA (Force Update the Main Balance)
+            // Nilagay natin ito dito para siguradong hindi ma-o-overwrite ng ibang functions sa itaas
+            if (currentBalanceEl) {
+                const newVal = formatPHP(savingsAmount);
+                // I-check kung magkaiba ang luma at bagong value para hindi mag-flicker
+                if (currentBalanceEl.textContent !== newVal) {
+                    currentBalanceEl.textContent = newVal;
+                }
+            }
 
         } else {
             resetDashboardToZero(); 
@@ -558,62 +582,9 @@ function filterDashboard() {
     const selectedMonth = monthSelect.value;
     console.log("DEBUG: Changing to month:", selectedMonth);
 
-    fetchDashboardTotals(selectedMonth); 
+   // fetchDashboardTotals(selectedMonth); 
     filterByMonth(selectedMonth);
     updateMonthlyOverview(selectedMonth);
-}
-
-// --- ILAGAY ITO SA BABA NG MAIN.JS ---
-function resetDashboardToZero() {
-    // 1. Income Box Reset (Main Cards)
-    const mainFields = ["monthly_income", "starting_money", "current_balance"];
-    mainFields.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = "₱ 0.00";
-    });
-
-    // 2. Transaction Breakdown Reset (Income Sources sa baba)
-    // Sa HTML mo, may 'display-' prefix ang IDs dito
-    const incomeSourceFields = ["display-salary", "display-freelance", "display-business"];
-    incomeSourceFields.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = "₱ 0.00";
-    });
-
-    // 3. Expense Categories Reset (Transaction List + Legend)
-    const categories = ["Rent", "Food", "Transport", "Shopping", "Bills", "Entertainment"];
-    categories.forEach(cat => {
-        // Yung nasa listahan sa baba (id="Rent", etc.)
-        const txnEl = document.getElementById(cat);
-        if (txnEl) txnEl.textContent = "₱ 0.00";
-
-        // Yung nasa tabi ng Pie Chart (id="leg-Rent", etc.)
-        const legEl = document.getElementById(`leg-${cat}`);
-        if (legEl) legEl.textContent = "₱ 0.00";
-    });
-
-    // 4. Stats Grid Reset
-    const stats = ["avg-daily-val", "savings-rate-val", "top-expense-val"];
-    stats.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-            if (id.includes("rate")) el.textContent = "0%";
-            else if (id.includes("top")) el.textContent = "None";
-            else el.textContent = "₱ 0.00";
-        }
-    });
-
-    // 5. Cash Flow & Total Expense Reset
-    if (document.getElementById("total-expense-value")) 
-        document.getElementById("total-expense-value").textContent = "₱ 0.00";
-    
-    // Reset Bars & Progress
-    const bars = document.querySelectorAll('.progress-fill');
-    bars.forEach(bar => bar.style.width = '0%');
-
-    // 6. Reset Charts
-    updateCashFlowStatus({});
-    renderPieChart({});
 }
 
   // -----------------------------
@@ -849,25 +820,21 @@ function initMonthDropdown() {
         link.onclick = async (e) => {
             e.preventDefault();
             
-            const monthNumber = link.getAttribute("data-month");
+            let monthNumber = link.getAttribute("data-month");
             const monthName = link.textContent.trim();
+            const label = document.querySelector('.dropdown-label');
 
-            if (monthNumber) {
-                console.log(`DEBUG: Filtering all for: ${monthName} (${monthNumber})`);
-                
-                await filterByMonth(monthNumber); 
-
-                await fetchDashboardTotals(monthNumber);
-
-                await updateMonthlyOverview(monthNumber);
-
+            if (!monthNumber || monthName === "Present") {
+                monthNumber = new Date().getMonth() + 1;
+                if (label) label.textContent = "View Present";
             } else {
-                const label = document.querySelector('.dropdown-label');
-                if (label) label.textContent = "View History";
-                
-                initializeDashboard(); 
+                if (label) label.textContent = monthName;
             }
 
+            console.log(`DEBUG: Updating dashboard for month: ${monthNumber}`);
+
+            await filterByMonth(monthNumber); 
+            
             menu.hidden = true;
         };
     });
@@ -916,7 +883,7 @@ async function updateMonthlyOverview(selectedMonth = null) {
         window.myBarChart = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: data.labels, // Ito dapat ay yung selected month lang or range
+                labels: data.labels,
                 datasets: [
                     { label: 'Income', data: data.income, backgroundColor: '#3b82f6', borderRadius: 5 },
                     { label: 'Expenses', data: data.expenses, backgroundColor: '#ef4444', borderRadius: 5 }
@@ -931,4 +898,57 @@ async function updateMonthlyOverview(selectedMonth = null) {
     } catch (err) {
         console.error("Error updating bar graph:", err);
     }
+}
+
+// --- ILAGAY ITO SA BABA NG MAIN.JS ---
+function resetDashboardToZero() {
+    // 1. Income Box Reset (Main Cards)
+    const mainFields = ["monthly_income", "starting_money"]; //"current_balance"
+    mainFields.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = "₱ 0.00";
+    });
+
+    // 2. Transaction Breakdown Reset (Income Sources sa baba)
+    // Sa HTML mo, may 'display-' prefix ang IDs dito
+    const incomeSourceFields = ["display-salary", "display-freelance", "display-business"];
+    incomeSourceFields.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = "₱ 0.00";
+    });
+
+    // 3. Expense Categories Reset (Transaction List + Legend)
+    const categories = ["Rent", "Food", "Transport", "Shopping", "Bills", "Entertainment"];
+    categories.forEach(cat => {
+        // Yung nasa listahan sa baba (id="Rent", etc.)
+        const txnEl = document.getElementById(cat);
+        if (txnEl) txnEl.textContent = "₱ 0.00";
+
+        // Yung nasa tabi ng Pie Chart (id="leg-Rent", etc.)
+        const legEl = document.getElementById(`leg-${cat}`);
+        if (legEl) legEl.textContent = "₱ 0.00";
+    });
+
+    // 4. Stats Grid Reset
+    const stats = ["avg-daily-val", "savings-rate-val", "top-expense-val"];
+    stats.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            if (id.includes("rate")) el.textContent = "0%";
+            else if (id.includes("top")) el.textContent = "None";
+            else el.textContent = "₱ 0.00";
+        }
+    });
+
+    // 5. Cash Flow & Total Expense Reset
+    if (document.getElementById("total-expense-value")) 
+        document.getElementById("total-expense-value").textContent = "₱ 0.00";
+    
+    // Reset Bars & Progress
+    const bars = document.querySelectorAll('.progress-fill');
+    bars.forEach(bar => bar.style.width = '0%');
+
+    // 6. Reset Charts
+    updateCashFlowStatus({});
+    renderPieChart({});
 }

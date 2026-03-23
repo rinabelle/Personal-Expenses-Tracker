@@ -31,9 +31,12 @@ const db = mysql.createPool({
 ///////////////////////////
 app.get('/dashboard-totals/:user_id', (req, res) => {
     const userId = req.params.user_id;
-    const { month, year } = req.query;
+    
+    // FALLBACK: Kung walang pinadalang month/year, gamitin ang "ngayon"
+    const month = req.query.month || (new Date().getMonth() + 1);
+    const year = req.query.year || new Date().getFullYear();
 
-    // SQL query na may filter para sa specific month at year
+    // SQL: Hanapin ang saktong row para sa buwan na iyon
     const query = `
         SELECT current_balance 
         FROM monthly 
@@ -41,9 +44,12 @@ app.get('/dashboard-totals/:user_id', (req, res) => {
         LIMIT 1`;
 
     db.query(query, [userId, month, year], (err, results) => {
-        if (err) return res.status(500).json({ status: "error" });
+        if (err) {
+            console.error("Backend Error:", err);
+            return res.status(500).json({ status: "error" });
+        }
         
-        // Ipadala ang balance ng buwang iyon, o 0 kung walang nahanap
+        // Ipadala ang balance, o 0 kung wala pang record sa buwang iyon
         const balance = results.length > 0 ? results[0].current_balance : 0;
         res.json({ status: "success", current_balance: balance });
     });
@@ -434,9 +440,13 @@ app.get('/api/monthly-stats/:user_id', (req, res) => {
 //  MONTH FILTER ROUTE
 ///////////////////////////
 app.get("/overview/filter/:month", (req, res) => {
-    const month = req.params.month;
+    let month = req.params.month;
     const { user_id, year } = req.query;
     const filterYear = year || new Date().getFullYear();
+
+    if (!month || month === "undefined" || month === "null") {
+        month = new Date().getMonth() + 1; 
+    }
 
     if (!user_id) return res.status(400).json({ status: "error", message: "User ID required" });
 
