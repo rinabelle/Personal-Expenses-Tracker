@@ -2,7 +2,7 @@
   <html lang="en">
   <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Peso Tracker</title>
     <link rel="stylesheet" href="css/Main-page.css">
     <link rel="icon" href="favicon.ico" type="image/x-icon">
@@ -232,9 +232,23 @@
               </ul>
           </article>
 
-          <div class="main-actions">
-            <button class="btn-expenses" id="openExpenses">Add Expenses</button>
-            <button class="btn-income" id="openIncome">Add Income</button>
+          <div class="stats-grid" role="region">
+            <article class="card stat-card">
+              <h3 class="stat-lbl" id="stat-daily">Avg Daily</h3>
+              <p class="stat-value white" id="avg-daily-val">&#8369;</p>
+              <p class="stat-sub">spending</p>
+            </article>
+
+            <article class="card stat-card">
+              <h3 class="stat-lbl" id="stat-savings">Savings Rate</h3>
+              <p class="stat-value green" id="savings-rate-val">%</p>
+              <p class="stat-sub">of income</p>
+            </article>
+
+            <article class="card stat-card">
+              <h3 class="stat-lbl" id="stat-top">Top Expense</h3>
+              <p class="stat-value blue" id="top-expense-val">&#8369;</p>
+            </article>
           </div>
         </section>
 
@@ -296,23 +310,9 @@
             </div>
           </article>
 
-          <div class="stats-grid" role="region">
-            <article class="card stat-card">
-              <h3 class="stat-lbl" id="stat-daily">Avg Daily</h3>
-              <p class="stat-value white" id="avg-daily-val">&#8369;</p>
-              <p class="stat-sub">spending</p>
-            </article>
-
-            <article class="card stat-card">
-              <h3 class="stat-lbl" id="stat-savings">Savings Rate</h3>
-              <p class="stat-value green" id="savings-rate-val">%</p>
-              <p class="stat-sub">of income</p>
-            </article>
-
-            <article class="card stat-card">
-              <h3 class="stat-lbl" id="stat-top">Top Expense</h3>
-              <p class="stat-value blue" id="top-expense-val">&#8369;</p>
-            </article>
+          <div class="main-actions">
+            <button class="btn-expenses" id="openExpenses">Add Expenses</button>
+            <button class="btn-income" id="openIncome">Add Income</button>
           </div>
         </section>
       </div>
@@ -320,7 +320,6 @@
 
       <!-- LOGOUT MODAL -->
       <div class="modal-overlay" id="logoutModal" hidden>
-        <div class="modal-backdrop"></div>
         <dialog class="modal">
           <div class="modal-icon modal-icon--blue">
             <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -342,7 +341,6 @@
 
       <!-- DELETE MODAL -->
       <div class="modal-overlay" id="deleteModal" hidden>
-        <div class="modal-backdrop"></div>
 
         <dialog class="modal">
           <div class="modal-icon modal-icon--red">
@@ -365,7 +363,6 @@
 
     <!-- Add Expenses Modal -->
         <section id="expenseModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="expense-title" hidden>
-          <div class="modal-backdrop"></div>
           <div class="modal">
             <header class="modal-header">
               <h2 id="expense-title" class="modal-title">Add Expense</h2>
@@ -410,7 +407,6 @@
 
         <!-- ADD INCOME MODAL -->
         <section id="incomeModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="income-title" hidden>
-          <div class="modal-backdrop"></div>
           <div class="modal" >
             <header class="modal-header">
               <h2 id="income-title" class="modal-title">Add Income</h2>

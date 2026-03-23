@@ -597,26 +597,66 @@ function filterDashboard() {
     { openBtn: "openIncome", modalId: "incomeModal", cancelId: "cancelIncome" }
   ];
 
-  function setupAllModals() {
+function setupAllModals() {
+    // 1. Universal Setup para sa pagbukas at pagsara
     modals.forEach(({ openBtn, modalId, cancelId }) => {
-      const open = document.getElementById(openBtn);
-      const modal = document.getElementById(modalId);
-      const cancel = document.getElementById(cancelId);
-      if (open && modal) open.addEventListener("click", () => modal.hidden = false);
-      if (cancel && modal) cancel.addEventListener("click", () => modal.hidden = true);
-      if (modal) {
-        modal.addEventListener("click", e => {
-          if (e.target === modal) modal.hidden = true;
-        });
-      }
+        const open = document.getElementById(openBtn);
+        const modal = document.getElementById(modalId);
+        const cancel = document.getElementById(cancelId);
+
+        if (open && modal) {
+            open.addEventListener("click", (e) => {
+                e.preventDefault();
+                // ISARA muna lahat ng ibang modal para walang overlap
+                document.querySelectorAll('.modal-overlay').forEach(m => m.hidden = true);
+                // BUKSAN ang tamang modal
+                modal.hidden = false;
+            });
+        }
+
+        if (cancel && modal) {
+            cancel.addEventListener("click", () => modal.hidden = true);
+        }
+
+        if (modal) {
+            modal.addEventListener("click", e => {
+                // Pag clinick ang labas (overlay), close ang modal
+                if (e.target === modal) modal.hidden = true;
+            });
+        }
     });
 
-    setupLogoutModal();
-    setupDeleteAccount();
-    setupExpenseModal();
-    setupIncomeModal();
-  }
+    // 2. I-setup ang SPECIFIC actions (Confirm Delete / Confirm Logout)
+    // HUWAG nang tawagin dito yung setup functions na nag-a-add din ng click sa openBtn
+    attachSpecificActions();
+}
 
+function attachSpecificActions() {
+    // Para sa LOGOUT
+    const confirmLogout = document.getElementById("confirmLogout");
+    if (confirmLogout) {
+        confirmLogout.onclick = () => { // Gamit ang .onclick para ma-overwrite ang luma
+            localStorage.clear();
+            window.location.href = "Log-in.html";
+        };
+    }
+
+    // Para sa DELETE
+    const confirmDelete = document.getElementById("confirmDelete");
+    if (confirmDelete) {
+        confirmDelete.onclick = async () => {
+            if (!user_id) return;
+            confirmDelete.innerText = "Deleting...";
+            try {
+                const res = await fetch(`http://localhost:3000/delete-user/${user_id}`, { method: "DELETE" });
+                if (res.ok) {
+                    localStorage.clear();
+                    window.location.href = "Log-in.html";
+                }
+            } catch (err) { console.error(err); }
+        };
+    }
+}
   function setupLogoutModal() {
     const confirmLogout = document.getElementById("confirmLogout");
     if (confirmLogout) {
