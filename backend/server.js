@@ -26,17 +26,13 @@ const db = mysql.createPool({
   queueLimit: 0
 });
 
-///////////////////////////
-// DASHBOARD TOTALS (FIXED)
-///////////////////////////
+// DASHBOARD TOTALS
 app.get('/dashboard-totals/:user_id', (req, res) => {
     const userId = req.params.user_id;
     
-    // FALLBACK: Kung walang pinadalang month/year, gamitin ang "ngayon"
     const month = req.query.month || (new Date().getMonth() + 1);
     const year = req.query.year || new Date().getFullYear();
 
-    // SQL: Hanapin ang saktong row para sa buwan na iyon
     const query = `
         SELECT current_balance 
         FROM monthly 
@@ -49,42 +45,39 @@ app.get('/dashboard-totals/:user_id', (req, res) => {
             return res.status(500).json({ status: "error" });
         }
         
-        // Ipadala ang balance, o 0 kung wala pang record sa buwang iyon
         const balance = results.length > 0 ? results[0].current_balance : 0;
         res.json({ status: "success", current_balance: balance });
     });
 });
 
-///////////////////////////
 // DELETE ACCOUNT ROUTE
-///////////////////////////
-app.delete("/delete-user/:id", (req, res) => {
+app.delete("/delete-user/:id", async (req, res) => {
     const user_id = req.params.id;
     console.log("Attempting to delete user:", user_id);
 
-    const q1 = "DELETE FROM expenses WHERE user_id = ?";
-    const q2 = "DELETE FROM income WHERE user_id = ?";
-    const q3 = "DELETE FROM monthly WHERE user_id = ?";
-    const q4 = "DELETE FROM users WHERE id = ?";
+    const connection = await db.promise().getConnection();
 
-    db.query(q1, [user_id], (err) => {
-        if (err) return res.status(500).json({ status: "error", message: "Expenses delete failed: " + err.message });
+    try {
+        await connection.beginTransaction();
 
-        db.query(q2, [user_id], (err) => {
-            if (err) return res.status(500).json({ status: "error", message: "Income delete failed: " + err.message });
+        await connection.query("DELETE FROM expenses WHERE user_id = ?", [user_id]);
+        await connection.query("DELETE FROM income WHERE user_id = ?", [user_id]);
+        await connection.query("DELETE FROM monthly WHERE user_id = ?", [user_id]);
+        await connection.query("DELETE FROM users WHERE id = ?", [user_id]);
 
-            db.query(q3, [user_id], (err) => {
-                if (err) return res.status(500).json({ status: "error", message: "Monthly balance delete failed: " + err.message });
+        await connection.commit();
 
-                db.query(q4, [user_id], (err) => {
-                    if (err) return res.status(500).json({ status: "error", message: "User delete failed: " + err.message });
-                    
-                    console.log("User and all related records deleted successfully.");
-                    res.json({ status: "success", message: "Account deleted successfully" });
-                });
-            });
-        });
-    });
+        console.log("User and all related records deleted successfully.");
+        res.json({ status: "success", message: "Account deleted successfully" });
+
+    } catch (err) {
+        await connection.rollback();
+        console.error("Delete Transaction Error:", err);
+        res.status(500).json({ status: "error", message: "Transaction failed: " + err.message });
+
+    } finally {
+        connection.release();
+    }
 });
 
 app.get("/balance/:user_id", (req, res) => {
@@ -102,7 +95,7 @@ app.get("/balance/:user_id", (req, res) => {
     });
 });
 
-// Kunin ang listahan ng transactions para sa Breakdown table
+// list Breakdown table
 app.get("/transactions/:user_id", (req, res) => {
     const { user_id } = req.params;
     const sql = "SELECT category, amount, expense_date FROM expenses WHERE user_id = ? ORDER BY expense_date DESC LIMIT 10";
@@ -113,9 +106,7 @@ app.get("/transactions/:user_id", (req, res) => {
     });
 });
 
-///////////////////////////
 // SIGN-UP
-///////////////////////////
 app.post("/signup", async (req, res) => {
     const { display_name, email, password, starting_balance } = req.body;
 
@@ -123,7 +114,6 @@ app.post("/signup", async (req, res) => {
         return res.json({ status: "error", message: "All fields are required." });
     }
 
-    // 1. Check kung existing na ang email
     db.query("SELECT id FROM users WHERE email = ?", [email], async (err, results) => {
         if (err) return res.json({ status: "error", message: err.message });
         if (results.length > 0) return res.json({ status: "error", message: "Email already exists." });
@@ -132,26 +122,22 @@ app.post("/signup", async (req, res) => {
         const balance = parseFloat(starting_balance);
         const now = new Date();
 
-        // 2. Simulan ang Transaction
         db.getConnection((err, connection) => {
             if (err) return res.json({ status: "error", message: "Database connection failed" });
 
             connection.beginTransaction(async (err) => {
                 try {
-                    //Insert User
                     const [userResult] = await connection.promise().query(
                         "INSERT INTO users (display_name, email, password, starting_balance) VALUES (?, ?, ?, ?)",
                         [display_name, email, hashedPassword, balance]
                     );
                     const user_id = userResult.insertId;
 
-                    // Insert Monthly Balance
                     await connection.promise().query(
                         "INSERT INTO monthly (user_id, month, year, month_income, current_balance) VALUES (?, ?, ?, ?, ?)",
                         [user_id, now.getMonth() + 1, now.getFullYear(), balance, balance]
                     );
 
-                    // Insert Income
                     await connection.promise().query(
                         "INSERT INTO income (user_id, starting_money, salary, freelance, business, income_date) VALUES (?, ?, 0, 0, 0, ?)",
                         [user_id, balance, now.toISOString().split("T")[0]]
@@ -170,9 +156,7 @@ app.post("/signup", async (req, res) => {
     });
 });
 
-///////////////////////////
 // LOGIN
-///////////////////////////
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
@@ -206,9 +190,7 @@ app.post("/login", async (req, res) => {
   });
 });
 
-///////////////////////////
 // FORGOT PASSWORD
-///////////////////////////
 app.post("/forgot-password", (req, res) => {
   const { email } = req.body;
   if (!email) return res.json({ status: "error", message: "Email is required." });
@@ -231,9 +213,6 @@ app.post("/forgot-password", (req, res) => {
   });
 });
 
-///////////////////////////
-// INCOME SYSTEM (FIXED)
-///////////////////////////
 app.post("/add-income/:user_id", (req, res) => {
     const { user_id } = req.params;
     const { source, amount } = req.body;
@@ -262,16 +241,21 @@ app.post("/add-income/:user_id", (req, res) => {
             if (err2) return res.status(500).json({ status: "error", message: err2.message });
             
             if (result.affectedRows === 0) {
-                // Kunin ang huling balance bago mag-insert ng bago
-                const sqlGetLastBalance = `SELECT current_balance FROM monthly WHERE user_id = ? ORDER BY id DESC LIMIT 1`;
-                db.query(sqlGetLastBalance, [user_id], (err3, lastRes) => {
+                const sqlGetLastRecord = `SELECT current_balance, month_income FROM monthly WHERE user_id = ? ORDER BY year DESC, month DESC LIMIT 1`;
+                
+                db.query(sqlGetLastRecord, [user_id], (err3, lastRes) => {
                     const lastBalance = lastRes.length > 0 ? parseFloat(lastRes[0].current_balance) : 0;
+                    const lastTotalIncome = lastRes.length > 0 ? parseFloat(lastRes[0].month_income) : 0;
+                    
                     const newBalance = lastBalance + incomeAmount;
-
-                    const createMonthly = `INSERT INTO monthly (user_id, month, year, month_income, current_balance, total_expense) VALUES (?, ?, ?, ?, ?, 0)`;
-                    db.query(createMonthly, [user_id, currentMonth, currentYear, incomeAmount, newBalance], (err4) => {
+                    const newTotalIncome = lastTotalIncome + incomeAmount;
+                    const createMonthly = `
+                        INSERT INTO monthly (user_id, month, year, month_income, current_balance, total_expense) 
+                        VALUES (?, ?, ?, ?, ?, 0)`;
+                        
+                    db.query(createMonthly, [user_id, currentMonth, currentYear, newTotalIncome, newBalance], (err4) => {
                         if (err4) return res.status(500).json({ status: "error", message: err4.message });
-                        res.json({ status: "success", message: "Income added and new monthly record created!" });
+                        res.json({ status: "success", message: "Income added and carry-over record created!" });
                     });
                 });
             } else {
@@ -280,7 +264,6 @@ app.post("/add-income/:user_id", (req, res) => {
         });
     });
 });
-
 app.get("/income-summary/:user_id", (req, res) => {
     const { user_id } = req.params;
     const sql = `
@@ -305,26 +288,23 @@ app.get("/income-summary/:user_id", (req, res) => {
     });
 });
 
-///////////////////////////
-// EXPENSES SYSTEM (UPDATED)
-///////////////////////////
+// EXPENSES SYSTEM
 app.post("/add-expense/:user_id", (req, res) => {
     const { user_id } = req.params;
     const { category, amount } = req.body;
     const expenseAmount = parseFloat(amount) || 0;
     
-    // Kunin ang kasalukuyang Buwan at Taon sa JS
     const now = new Date();
-    const currentMonth = now.getMonth() + 1; // 1-12
+    const currentMonth = now.getMonth() + 1;
     const currentYear = now.getFullYear();
 
-    // 1. I-insert ang transaction sa expenses table (History)
+    // 1. Insert the actual expense record
     const sqlInsertExpense = `INSERT INTO expenses (user_id, category, amount, expense_date) VALUES (?, ?, ?, NOW())`;
     
     db.query(sqlInsertExpense, [user_id, category, expenseAmount], (err) => {
-        if (err) return res.status(500).json({ status: "error", message: "Expense Insert Error: " + err.message });
+        if (err) return res.status(500).json({ status: "error", message: err.message });
 
-        // 2. Subukan munang i-UPDATE ang existing monthly record
+        // 2. Try to update the monthly summary for the current month
         const sqlUpdateMonthly = `
             UPDATE monthly 
             SET current_balance = current_balance - ?, 
@@ -332,28 +312,28 @@ app.post("/add-expense/:user_id", (req, res) => {
             WHERE user_id = ? AND month = ? AND year = ?`;
         
         db.query(sqlUpdateMonthly, [expenseAmount, expenseAmount, user_id, currentMonth, currentYear], (err2, result) => {
-            if (err2) return res.status(500).json({ status: "error", message: "Monthly Update Error: " + err2.message });
+            if (err2) return res.status(500).json({ status: "error", message: err2.message });
             
-            // 3. Kung "0" ang affectedRows, ibig sabihin bagong buwan ito. Gawan ng bagong record.
+            // 3. IF NO RECORD EXISTS YET FOR THIS MONTH
             if (result.affectedRows === 0) {
-                // Kukunin muna natin ang huling balance para ituloy sa bagong buwan (Optional but better)
-                const sqlGetLastBalance = `SELECT current_balance FROM monthly WHERE user_id = ? ORDER BY id DESC LIMIT 1`;
+                const sqlGetLastData = `SELECT current_balance, month_income FROM monthly WHERE user_id = ? ORDER BY year DESC, month DESC LIMIT 1`;
                 
-                db.query(sqlGetLastBalance, [user_id], (err3, lastRes) => {
+                db.query(sqlGetLastData, [user_id], (err3, lastRes) => {
                     const lastBalance = lastRes.length > 0 ? parseFloat(lastRes[0].current_balance) : 0;
+                    const lastIncome = lastRes.length > 0 ? parseFloat(lastRes[0].month_income) : 0;
+                    
                     const newBalance = lastBalance - expenseAmount;
 
                     const sqlCreateMonthly = `
                         INSERT INTO monthly (user_id, month, year, month_income, current_balance, total_expense) 
-                        VALUES (?, ?, ?, 0, ?, ?)`;
+                        VALUES (?, ?, ?, ?, ?, ?)`;
                     
-                    db.query(sqlCreateMonthly, [user_id, currentMonth, currentYear, newBalance, expenseAmount], (err4) => {
-                        if (err4) return res.status(500).json({ status: "error", message: "Failed to create new month record: " + err4.message });
+                    db.query(sqlCreateMonthly, [user_id, currentMonth, currentYear, lastIncome, newBalance, expenseAmount], (err4) => {
+                        if (err4) return res.status(500).json({ status: "error", message: err4.message });
                         res.json({ status: "success", message: "Expense added and new monthly record started!" });
                     });
                 });
             } else {
-                // Kung may na-update, success na agad!
                 res.json({ status: "success", message: "Expense added successfully!" });
             }
         });
@@ -374,7 +354,8 @@ app.get("/expenses-data/:user_id", (req, res) => {
             SUM(CASE WHEN category = 'Transport' THEN amount ELSE 0 END) as Transport,
             SUM(CASE WHEN category = 'Shopping' THEN amount ELSE 0 END) as Shopping,
             SUM(CASE WHEN category = 'Bills' THEN amount ELSE 0 END) as Bills,
-            SUM(CASE WHEN category = 'Entertainment' THEN amount ELSE 0 END) as Entertainment
+            SUM(CASE WHEN category = 'Entertainment' THEN amount ELSE 0 END) as Entertainment,
+            SUM(amount) as total_all 
         FROM expenses 
         WHERE user_id = ? 
           AND MONTH(expense_date) = ? 
@@ -383,20 +364,17 @@ app.get("/expenses-data/:user_id", (req, res) => {
     db.query(sql, [user_id, targetMonth, targetYear], (err, results) => {
         if (err) return res.status(500).json({ status: "error", message: err.message });
         
-        // Mahalaga ito: Siguraduhin na may fallback object kung walang results[0]
         const data = results[0] || {}; 
         
-        // I-wrap natin sa response object para laging may valid numbers
-        const cleanData = {
+        res.json({
             Rent: parseFloat(data.Rent) || 0,
             Food: parseFloat(data.Food) || 0,
             Transport: parseFloat(data.Transport) || 0,
             Shopping: parseFloat(data.Shopping) || 0,
             Bills: parseFloat(data.Bills) || 0,
-            Entertainment: parseFloat(data.Entertainment) || 0
-        };
-
-        res.json(cleanData);
+            Entertainment: parseFloat(data.Entertainment) || 0,
+            total_expense: parseFloat(data.total_all) || 0
+        });
     });
 });
 
@@ -411,7 +389,6 @@ app.get('/api/monthly-stats/:user_id', (req, res) => {
     
     let params = [userId];
 
-    // 2. Kung may pinasang month at year, i-filter ang SQL
     if (month && year) {
         query += ` AND month = ? AND year = ?`;
         params.push(month, year);
@@ -436,9 +413,7 @@ app.get('/api/monthly-stats/:user_id', (req, res) => {
     });
 });
 
-///////////////////////////
 //  MONTH FILTER ROUTE
-///////////////////////////
 app.get("/overview/filter/:month", (req, res) => {
     let month = req.params.month;
     const { user_id, year } = req.query;
@@ -450,7 +425,6 @@ app.get("/overview/filter/:month", (req, res) => {
 
     if (!user_id) return res.status(400).json({ status: "error", message: "User ID required" });
 
-    // 1. Query para sa Expenses
     const expenseSql = `
         SELECT category, SUM(amount) as total 
         FROM expenses 
@@ -465,7 +439,6 @@ app.get("/overview/filter/:month", (req, res) => {
             if (expenseData.hasOwnProperty(row.category)) expenseData[row.category] = parseFloat(row.total) || 0;
         });
 
-        // 2. Query para sa Income
         const incomeSql = `
             SELECT 
                 SUM(salary) as salary, 
@@ -497,9 +470,7 @@ app.get("/overview/filter/:month", (req, res) => {
     });
 });
 
-///////////////////////////
 // START SERVER
-///////////////////////////
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });

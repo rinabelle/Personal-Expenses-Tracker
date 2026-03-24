@@ -2,9 +2,13 @@
   // GLOBAL VARIABLES
   // ------------------------------
   const user_id = localStorage.getItem("user_id");
-  let pieChartInstance = null;
-  let myChartInstance = null;
-  let currentIncome = { salary: 0, freelance: 0, business: 0, starting_money: 0 };
+    let pieChartInstance = null;
+    let myBarChart = null;
+
+    const formatPHP = (val) => `₱ ${(parseFloat(val) || 0).toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    })}`;
 
   const incomeEls = {
     starting_money: document.getElementById("starting_money"),
@@ -15,32 +19,39 @@
   };
 
 document.addEventListener("DOMContentLoaded", async () => {
+    // 1. Security Check
+    if (!user_id) {
+        window.location.href = "Log-in.html";
+        return;
+    }
     if (!document.querySelector(".dashboard")) return;
 
+    // 2. Personalization
     const username = localStorage.getItem("display_name"); 
     const userEl = document.getElementById("display-username");
     if (userEl && username) userEl.textContent = username;
       
+    // 3. UI Setup
     setCurrentDate(); 
     setupAllModals();
     setupDropdowns();
+    setupExpenseModal();
+    setupIncomeModal();
 
-    // 1. Kunin ang current month (3)
+    // 4. Data Loading
     const currentMonth = new Date().getMonth() + 1;
-
-    // 2. Tawagin ang filterByMonth para mag-load lahat agad
     await filterByMonth(currentMonth); 
     
-    // 3. (Optional) Kung may ibang ginagawa ang initializeDashboard 
-    // na hindi related sa data (like animations), itira mo siya:
-    //await initializeDashboard(); 
+    // 5. Transition
+    if (typeof whiteScreenTransition === "function") {
+        whiteScreenTransition();
+    }
 });
 
     async function initializeDashboard() {
         console.log("Initializing Dashboard...");
         try {
-            //fetchDashboardTotals();
-            await fetchUserIncome();
+            await updateDashboard();
             await loadExpenseTotals();
         } catch (err) {
             console.error("Dashboard failed:", err);
@@ -52,7 +63,7 @@ if (viewPresentBtn) {
     viewPresentBtn.addEventListener("click", () => {
         const labelElement = document.querySelector('.dropdown-label');
         if (labelElement) {
-            labelElement.textContent = "View History"; // O "Present View"
+            labelElement.textContent = "View History";
             labelElement.style.color = ""; 
         }
         initializeDashboard(); 
@@ -68,126 +79,48 @@ async function loadExpenseTotals(selectedMonth = null) {
     const year = new Date().getFullYear();
 
     try {
+        // 1. Fetch Expense Data
         const expRes = await fetch(`http://localhost:3000/expenses-data/${user_id}?month=${month}&year=${year}`);
         const expenseData = await expRes.json();
 
+        // 2. Fetch Income 
         const incRes = await fetch(`http://localhost:3000/income-summary/${user_id}`);
         const incomeData = await incRes.json();
-        
         currentIncome = incomeData; 
 
-        // --- DITO NATIN PAPALITAN YUNG "₱ 0" SA SCREEN ---
         const categories = ["Rent", "Food", "Transport", "Shopping", "Bills", "Entertainment"];
+        
+        const formatPHP = (val) => `₱ ${(parseFloat(val) || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+
         categories.forEach(cat => {
             const val = parseFloat(expenseData[cat]) || 0;
-            const element = document.getElementById(cat); // Dapat matching ang ID sa HTML
-            if (element) {
-                element.textContent = `₱ ${val.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-            }
-        });
-        // ------------------------------------------------
 
-        renderPieChart(expenseData);           
+            // update Category Value
+            const element = document.getElementById(cat);
+            if (element) element.textContent = formatPHP(val);
+
+            // update LEGEND
+            const legElement = document.getElementById(`leg-${cat}`);
+            if (legElement) legElement.textContent = formatPHP(val);
+        });
+
+        // 3. update "Total Expenses" Card
+        const totalEl = document.getElementById("total-expense-value");
+        if (totalEl) {
+            totalEl.textContent = formatPHP(expenseData.total_expense);
+        }
+
+        // 4. Trigger Charts & Analytics
+        renderPieChart(expenseData);
         calculateFinancialInsights(expenseData); 
-        updateCashFlowStatus(expenseData);     
+        updateCashFlowStatus(expenseData);
+        
         await updateMonthlyOverview(month);
 
-        const totalExp = Object.values(expenseData).reduce((a, b) => a + (parseFloat(b) || 0), 0);
-        console.log(`DEBUG: Dashboard Sync - Total Exp: ₱${totalExp}`);
-
     } catch (err) {
-        console.error("Dashboard Sync Error:", err);
+        console.error("Dashboard Expense Sync Error:", err);
     }
 }
-/*
-  async function fetchDashboardTotals(selectedMonth = null) {
-        const user_id = localStorage.getItem("user_id"); 
-        
-        if (!user_id) return;
-
-        const month = selectedMonth || (new Date().getMonth() + 1);
-        const year = new Date().getFullYear();
-
-        fetch(`http://localhost:3000/dashboard-totals/${user_id}?month=${month}&year=${year}`)  
-        .then(res => res.json())
-        .then(data => {
-            console.log(`DEBUG: Data for Month ${month}:`, data); 
-            
-            if (data.status === "success") {
-                const balEl = document.getElementById("current_balance");
-                if (balEl) {
-                    const balance = Number(data.current_balance || 0);
-                    balEl.textContent = balance.toLocaleString("en-PH", { 
-                        style: "currency", 
-                        currency: "PHP" 
-                    });
-                }
-            }
-        })
-        .catch(err => console.error("Error sa fetchDashboardTotals:", err));
-    }
-*/
-
-fetch(`http://localhost:3000/expenses-data/${user_id}`)
-    .then(res => res.json())
-    .then(data => {
-        // 1. Kunin ang mga numbers para sa Pie Chart
-        const values = [
-            data.Rent || 0, 
-            data.Food || 0, 
-            data.Transport || 0, 
-            data.Shopping || 0, 
-            data.Bills || 0, 
-            data.Entertainment || 0
-        ];
-
-        // 2. I-update ang "Legend"
-        document.getElementById("leg-Rent").textContent = `₱ ${data.Rent || 0}`;
-        document.getElementById("leg-Food").textContent = `₱ ${data.Food || 0}`;
-        document.getElementById("leg-Transport").textContent = `₱ ${data.Transport || 0}`;
-        document.getElementById("leg-Shopping").textContent = `₱ ${data.Shopping || 0}`;
-        document.getElementById("leg-Bills").textContent = `₱ ${data.Bills || 0}`;
-        document.getElementById("leg-Entertainment").textContent = `₱ ${data.Entertainment || 0}`;
-
-        // 3. I-calculate ang Total at i-display sa "Total Expenses"
-        const total = values.reduce((a, b) => a + b, 0);
-        document.getElementById("total-expense-value").textContent = `₱ ${total.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-
-        // 4. I-update ang Pie Chart
-        if (window.myPieChart) { 
-            window.myPieChart.data.datasets[0].data = values;
-            window.myPieChart.update();
-        }
-    })
-    .catch(err => console.error("Error fetching expenses:", err));
-
-  async function syncDashboard() {
-      try {
-          const res = await fetch(`http://localhost:3000/api/monthly-stats/${user_id}`);
-          const data = await res.json();
-
-          if (!data.expenses || data.expenses.length === 0) return;
-
-          const currentTotalExpense = data.expenses[data.expenses.length - 1];
-          const currentTotalIncome = data.income[data.income.length - 1];
-
-          updateCashFlowStatus({
-              totalFromDatabase: currentTotalExpense,
-              incomeFromDatabase: currentTotalIncome 
-          });
-
-          const totalEl = document.getElementById("total-expense-value");
-          if (totalEl) {
-              totalEl.textContent = currentTotalExpense.toLocaleString("en-PH", { 
-                  style: "currency", 
-                  currency: "PHP" 
-              });
-          }
-
-      } catch (err) {
-          console.error("Sync Error:", err);
-      }
-  }
 
   // -----------------------------
   // DATA FETCHING
@@ -206,71 +139,43 @@ fetch(`http://localhost:3000/expenses-data/${user_id}`)
       .catch(err => console.error("Error starting money:", err));
   }
 
-async function fetchUserIncome() {
+//for INCOMEEEEEE
+async function updateDashboard() {
+    const user_id = localStorage.getItem("user_id");
     if (!user_id) return;
+
     try {
         const res = await fetch(`http://localhost:3000/income-summary/${user_id}`);
-        const result = await res.json();
-        
-        if (result.status === "success") {
-            setIncome(
-                parseFloat(result.salary) || 0,
-                parseFloat(result.freelance) || 0,
-                parseFloat(result.business) || 0,
-                parseFloat(result.starting_money) || 0
-            );
+        const data = await res.json();
+
+        if (data.status === "success") {
+            const formatPHP = (val) => `₱ ${(parseFloat(val) || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+            const total = (data.salary || 0) + (data.freelance || 0) + (data.business || 0) + (data.starting_money || 0);
+
+            // Update Top Summary
+            if (document.getElementById("monthly_income")) document.getElementById("monthly_income").textContent = formatPHP(total);
+            if (document.getElementById("starting_money")) document.getElementById("starting_money").textContent = formatPHP(data.starting_money);
+            
+            // Update Income Breakdown
+            if (document.getElementById("salary")) document.getElementById("salary").textContent = formatPHP(data.salary);
+            if (document.getElementById("freelance")) document.getElementById("freelance").textContent = formatPHP(data.freelance);
+            if (document.getElementById("business")) document.getElementById("business").textContent = formatPHP(data.business);
+
+            // Update Transaction List
+            if (document.getElementById("display-salary")) document.getElementById("display-salary").textContent = formatPHP(data.salary);
+            if (document.getElementById("display-freelance")) document.getElementById("display-freelance").textContent = formatPHP(data.freelance);
+            if (document.getElementById("display-business")) document.getElementById("display-business").textContent = formatPHP(data.business);
+            
+            refreshCurrentBalance(); 
+            
+            currentIncome = data;
         }
     } catch (err) {
-        console.error("fetchUserIncome failed:", err);
+        console.error("Dashboard Sync Error:", err);
     }
 }
 
-fetch(`http://localhost:3000/income-summary/${user_id}`)
-    .then(res => res.json())
-    .then(data => {
-        if (data.status === "success") {
-            document.getElementById("monthly_income").textContent = `₱${(data.salary + data.freelance + data.business + data.starting_money).toLocaleString()}`;
-            document.getElementById("starting_money").textContent = `₱${data.starting_money.toLocaleString()}`;
-            document.getElementById("salary").textContent = `₱${data.salary.toLocaleString()}`;
-            document.getElementById("freelance").textContent = `₱${data.freelance.toLocaleString()}`;
-            document.getElementById("business").textContent = `₱${data.business.toLocaleString()}`;
-
-            document.getElementById("display-salary").textContent = `₱ ${data.salary.toLocaleString()}`;
-            document.getElementById("display-freelance").textContent = `₱ ${data.freelance.toLocaleString()}`;
-            document.getElementById("display-business").textContent = `₱ ${data.business.toLocaleString()}`;
-            
-            const totalIncome = data.salary + data.freelance + data.business + data.starting_money;
-            document.getElementById("monthly_income").textContent = `₱ ${totalIncome.toLocaleString()}`;
-        }
-    }); 
-
-function setIncome(salary, freelance, business, starting_money = 0) {
-    currentIncome = { salary, freelance, business, starting_money };
-    
-    const formatPHP = (val) => Number(val).toLocaleString("en-PH", { 
-        style: "currency", 
-        currency: "PHP" 
-    });
-
-    // 1. Update Business
-    if (incomeEls.business) incomeEls.business.textContent = formatPHP(business);
-
-    if (incomeEls.starting_money) incomeEls.starting_money.textContent = formatPHP(starting_money);
-
-    // 3. Update Salary at Freelance
-    if (incomeEls.salary) incomeEls.salary.textContent = formatPHP(salary);
-    if (incomeEls.freelance) incomeEls.freelance.textContent = formatPHP(freelance);
-
-    // 4. Tawagin ang total calculation
-    updateMonthlyTotal();
-}
-
-  function updateMonthlyTotal() {
-    const total = currentIncome.starting_money + currentIncome.salary + currentIncome.freelance + currentIncome.business;
-    if (incomeEls.monthly) incomeEls.monthly.textContent = total.toLocaleString("en-PH", { style: "currency", currency: "PHP" });
-  }
-
-  function refreshCurrentBalance() {
+function refreshCurrentBalance() {
     fetch(`http://localhost:3000/balance/${user_id}`)
       .then(res => res.json())
       .then(data => {
@@ -280,7 +185,7 @@ function setIncome(salary, freelance, business, starting_money = 0) {
           balanceEl.textContent = parseFloat(data.balance).toLocaleString("en-PH", { style: "currency", currency: "PHP" });
         }
       });
-  }
+}
 
 // ------------------------------
 // UI UPDATE WORKERS
@@ -367,50 +272,61 @@ async function initCharts(month = null, year = null) {
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
 
-    if (window.myBarChart) {
-        window.myBarChart.destroy();
-        window.myBarChart = null; 
-    }
-
     const userId = localStorage.getItem("user_id");
     const currentYear = year || new Date().getFullYear();
     
     let url = `http://localhost:3000/api/monthly-stats/${userId}?year=${currentYear}`;
-    if (month) {
-        url += `&month=${month}`; 
-    }
+    if (month) url += `&month=${month}`; 
 
     try {
         const response = await fetch(url);
         const dbData = await response.json(); 
 
-        if (!dbData.labels || dbData.labels.length === 0) {
-            console.warn("Walang data para sa chart sa period na ito.");
-            return;
+        // 1. DESTROY ONLY IF WE ARE ABOUT TO RENDER NEW DATA
+        if (window.myBarChart) {
+            window.myBarChart.destroy();
+            window.myBarChart = null; 
         }
 
-        let labels = dbData.labels;
-        if (!month) {
+        // 2. BETTER EMPTY STATE
+        let labels = dbData.labels || [];
+        let incomeData = dbData.income || [];
+        let expenseData = dbData.expenses || [];
+
+        if (labels.length === 0) {
+            labels = ["No Data"];
+            incomeData = [0];
+            expenseData = [0];
+        } else if (!month) {
             const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec"];
-            labels = dbData.labels.map(label => {
+            labels = labels.map(label => {
                 const monthNum = parseInt(label.replace("Month ", "")); 
                 return monthNames[monthNum - 1] || label;
             });
         }
 
+        // 3. RENDER
         window.myBarChart = new Chart(ctx, {
             type: "bar",
             data: {
                 labels: labels,
                 datasets: [
-                    { label: "Income", data: dbData.income, backgroundColor: "#3b82f6" },
-                    { label: "Expenses", data: dbData.expenses, backgroundColor: "#ef4444" }
+                    { label: "Income", data: incomeData, backgroundColor: "#3b82f6", borderRadius: 4 },
+                    { label: "Expenses", data: expenseData, backgroundColor: "#ef4444", borderRadius: 4 }
                 ]
             },
             options: { 
                 responsive: true,
                 maintainAspectRatio: false,
-                scales: { y: { beginAtZero: true } }
+                scales: { 
+                    y: { 
+                        beginAtZero: true,
+                        ticks: { callback: (value) => '₱' + value.toLocaleString() } 
+                    } 
+                },
+                plugins: {
+                    legend: { display: true, position: 'top' }
+                }
             }
         });
     } catch (err) {
@@ -501,9 +417,6 @@ async function filterByMonth(monthNumber) {
                 chartHeader.textContent = monthNumber ? `${monthName} Overview` : "Yearly Overview";
             }
 
-            // Helper function para sa uniform formatting
-            const formatPHP = (val) => `₱${(parseFloat(val) || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-
             // 1. UPDATE INCOME BOXES
             const totalInc = (parseFloat(inc.salary) || 0) + (parseFloat(inc.freelance) || 0) + (parseFloat(inc.business) || 0) + (parseFloat(inc.starting_money) || 0);
             
@@ -559,10 +472,8 @@ async function filterByMonth(monthNumber) {
             calculateFinancialInsights(exp);
 
             // 7. FINAL UI UPDATE: HULING MAGSASALITA (Force Update the Main Balance)
-            // Nilagay natin ito dito para siguradong hindi ma-o-overwrite ng ibang functions sa itaas
             if (currentBalanceEl) {
                 const newVal = formatPHP(savingsAmount);
-                // I-check kung magkaiba ang luma at bagong value para hindi mag-flicker
                 if (currentBalanceEl.textContent !== newVal) {
                     currentBalanceEl.textContent = newVal;
                 }
@@ -607,9 +518,7 @@ function setupAllModals() {
         if (open && modal) {
             open.addEventListener("click", (e) => {
                 e.preventDefault();
-                // ISARA muna lahat ng ibang modal para walang overlap
                 document.querySelectorAll('.modal-overlay').forEach(m => m.hidden = true);
-                // BUKSAN ang tamang modal
                 modal.hidden = false;
             });
         }
@@ -620,14 +529,11 @@ function setupAllModals() {
 
         if (modal) {
             modal.addEventListener("click", e => {
-                // Pag clinick ang labas (overlay), close ang modal
                 if (e.target === modal) modal.hidden = true;
             });
         }
     });
 
-    // 2. I-setup ang SPECIFIC actions (Confirm Delete / Confirm Logout)
-    // HUWAG nang tawagin dito yung setup functions na nag-a-add din ng click sa openBtn
     attachSpecificActions();
 }
 
@@ -635,7 +541,7 @@ function attachSpecificActions() {
     // Para sa LOGOUT
     const confirmLogout = document.getElementById("confirmLogout");
     if (confirmLogout) {
-        confirmLogout.onclick = () => { // Gamit ang .onclick para ma-overwrite ang luma
+        confirmLogout.onclick = () => { 
             localStorage.clear();
             window.location.href = "Log-in.html";
         };
@@ -657,105 +563,109 @@ function attachSpecificActions() {
         };
     }
 }
-  function setupLogoutModal() {
-    const confirmLogout = document.getElementById("confirmLogout");
-    if (confirmLogout) {
-      confirmLogout.addEventListener("click", () => {
-        localStorage.clear();
-        window.location.href = "Log-in.html";
-      });
-    }
-  }
 
- 
-  function setupExpenseModal() {
-    const saveExpense = document.getElementById("saveExpense");
-    if (!saveExpense) return;
+function setupExpenseModal() {
+  const saveExpense = document.getElementById("saveExpense");
+  if (!saveExpense) return;
 
-    saveExpense.addEventListener("click", e => {
-      e.preventDefault();
-      const amount = parseFloat(document.getElementById("expense-amount").value);
-      const category = document.querySelector("#expenses-menu .drpdwn-option.active")?.textContent;
+  saveExpense.addEventListener("click", async (e) => { 
+    e.preventDefault();
+    const amount = parseFloat(document.getElementById("expense-amount").value);
+    const category = document.querySelector("#expenses-menu .drpdwn-option.active")?.textContent;
 
-      if (!category || category === "Select") return alert("Please select a category");
-      if (!amount || amount <= 0) return alert("Enter a valid amount");
+    if (!category || category === "Select") return alert("Please select a category");
+    if (!amount || amount <= 0) return alert("Enter a valid amount");
 
-      const originalText = saveExpense.textContent;
-      saveExpense.textContent = "Saving...";
-      saveExpense.disabled = true;
+    const originalText = saveExpense.textContent;
+    saveExpense.textContent = "Saving...";
+    saveExpense.disabled = true;
 
-      fetch(`http://localhost:3000/add-expense/${user_id}`, {
+    try {
+      const res = await fetch(`http://localhost:3000/add-expense/${user_id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category, amount})
-      })
-      .then(res => res.json())
-      .then(data => {
-        saveExpense.textContent = originalText;
-        saveExpense.disabled = false;
-
-        if (data.status === "success") {
-          loadExpenseTotals();  
-          refreshCurrentBalance();
-          document.getElementById("expenseModal").hidden = true;
-          document.getElementById("expense-amount").value = "";
-          document.querySelector("#expenses-dropdown .dropdown-label").textContent = "Select";
-        } else {
-          alert(data.message || "Failed to add expense");
-        }
-      })
-      .catch(err => {
-        saveExpense.textContent = originalText;
-        saveExpense.disabled = false;
-        console.error(err);
-        alert("Something went wrong. Please try again.");
+        body: JSON.stringify({ category, amount })
       });
-    });
-  }
+      
+      const data = await res.json();
 
-  function setupIncomeModal() {
-    const saveIncome = document.getElementById("saveIncome");
-    if (!saveIncome) return;
+      saveExpense.textContent = originalText; 
+      saveExpense.disabled = false;
 
-    saveIncome.addEventListener("click", e => {
-      e.preventDefault();
-      const amount = parseFloat(document.getElementById("income-amount").value);
-      const source = document.querySelector("#income-menu .drpdwn-option.active")?.textContent;
+      if (data.status === "success") {
+        const currentMonth = new Date().getMonth() + 1;
 
-      if (!source || source === "Select") return alert("Please select income source");
-      if (!amount || amount <= 0) return alert("Enter a valid amount");
+        await filterByMonth(currentMonth); 
+        
+        document.getElementById("expenseModal").hidden = true;
+        document.getElementById("expense-amount").value = "";
+        document.querySelectorAll("#expenses-menu .drpdwn-option").forEach(opt => opt.classList.remove("active"));
+        const dropdownLabel = document.querySelector("#expenses-dropdown .dropdown-label");
+            if (dropdownLabel) dropdownLabel.textContent = "Select";
 
-      const originalText = saveIncome.textContent;
-      saveIncome.textContent = "Saving...";
-      saveIncome.disabled = true;
+      } else {
+        alert(data.message || "Failed to add expense");
+        saveExpense.textContent = originalText;
+        saveExpense.disabled = false;
+      }
+    } catch (err) {
+      saveExpense.textContent = originalText;
+      saveExpense.disabled = false;
+      console.error("Expense Save Error:", err);
+      alert("Something went wrong. Please try again.");
+    }
+  });
+}
 
-      fetch(`http://localhost:3000/add-income/${user_id}`, {
+function setupIncomeModal() {
+  const saveIncome = document.getElementById("saveIncome");
+  if (!saveIncome) return;
+
+  saveIncome.addEventListener("click", async (e) => { 
+    e.preventDefault();
+    const amount = parseFloat(document.getElementById("income-amount").value);
+    const source = document.querySelector("#income-menu .drpdwn-option.active")?.textContent;
+
+    if (!source || source === "Select") return alert("Please select income source");
+    if (!amount || amount <= 0) return alert("Enter a valid amount");
+
+    const originalText = saveIncome.textContent;
+    saveIncome.textContent = "Saving...";
+    saveIncome.disabled = true;
+
+    try {
+      const res = await fetch(`http://localhost:3000/add-income/${user_id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ source, amount })
-      })
-      .then(res => res.json())
-      .then(data => {
-        saveIncome.textContent = originalText;
-        saveIncome.disabled = false;
-
-        if (data.status === "success") {
-          fetchUserIncome();
-          document.getElementById("incomeModal").hidden = true;
-          document.getElementById("income-amount").value = "";
-          document.querySelector("#income-dropdown .dropdown-label").textContent = "Select";
-        } else {
-          alert(data.message || "Failed to add income");
-        }
-      })
-      .catch(err => {
-        saveIncome.textContent = originalText;
-        saveIncome.disabled = false;
-        console.error(err);
-        alert("Something went wrong. Please try again.");
       });
-    });
-  }
+      
+      const data = await res.json();
+
+      saveIncome.textContent = originalText;
+      saveIncome.disabled = false;
+
+      if (data.status === "success") {
+        await updateDashboard(); 
+        
+        const currentMonth = new Date().getMonth() + 1;
+        await filterByMonth(currentMonth);
+
+        document.getElementById("incomeModal").hidden = true;
+        document.getElementById("income-amount").value = "";
+        document.querySelector("#income-dropdown .dropdown-label").textContent = "Select";
+        
+      } else {
+        alert(data.message || "Failed to add income");
+      }
+    } catch (err) {
+      saveIncome.textContent = originalText;
+      saveIncome.disabled = false;
+      console.error(err);
+      alert("Something went wrong. Please try again.");
+    }
+  });
+}
 
   // -------- DELETE -------------------
 function setupDeleteAccount() {
@@ -764,6 +674,13 @@ function setupDeleteAccount() {
     if (confirmDeleteBtn) {
         confirmDeleteBtn.addEventListener("click", async (e) => { 
             e.preventDefault();
+
+            const warning = window.confirm("Are you sure you want to delete your account? This will permanently remove all your data.");
+            
+            if (!warning) {
+                console.log("Delete aborted by user.");
+                return; 
+            }
 
             if (!user_id) {
                 alert("User ID not found. Please log in again.");
@@ -782,7 +699,7 @@ function setupDeleteAccount() {
                 if (!response.ok) {
                     const errorText = await response.text();
                     console.error("Server Error Response:", errorText);
-                    alert("Server error: " + response.status + ". Pakicheck ang backend route.");
+                    alert("Server error: " + response.status);
                     confirmDeleteBtn.innerText = "Delete Account";
                     confirmDeleteBtn.disabled = false;
                     return;
@@ -801,7 +718,7 @@ function setupDeleteAccount() {
                 }
             } catch (error) {
                 console.error("Fetch error:", error);
-                alert("Cannot connect to server. Is it running?");
+                alert("Cannot connect to server.");
                 confirmDeleteBtn.innerText = "Delete Account";
                 confirmDeleteBtn.disabled = false;
             }
@@ -895,7 +812,6 @@ function initMonthDropdown() {
     requestAnimationFrame(() => overlay.style.transform = "translateY(-100%)");
   }
 
-  
 async function updateMonthlyOverview(selectedMonth = null) {
     const user_id = localStorage.getItem("user_id");
     const month = selectedMonth || (new Date().getMonth() + 1);
@@ -910,8 +826,8 @@ async function updateMonthlyOverview(selectedMonth = null) {
         const ctx = canvas.getContext('2d');
 
         if (!data.labels || data.labels.length === 0) {
-            console.warn("No data found for this period.");
-            data.labels = ["No Records"];
+            console.warn("No data for Bar Chart. Showing empty state.");
+            data.labels = ["No Data"];
             data.income = [0];
             data.expenses = [0];
         }
@@ -932,11 +848,19 @@ async function updateMonthlyOverview(selectedMonth = null) {
             options: { 
                 responsive: true, 
                 maintainAspectRatio: false,
-                scales: { y: { beginAtZero: true } }
+                scales: { 
+                    y: { 
+                        beginAtZero: true,
+                        ticks: { callback: (value) => '₱' + value.toLocaleString() }
+                    } 
+                },
+                plugins: {
+                    legend: { position: 'top' }
+                }
             }
         });
     } catch (err) {
-        console.error("Error updating bar graph:", err);
+        console.error("Bar Chart Sync Error:", err);
     }
 }
 
