@@ -17,11 +17,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 const db = mysql.createPool({
-    host: process.env.DB_HOST || "mysql-xxxxx.aivencloud.com",
-    user: process.env.DB_USER || "avnadmin",
-    password: process.env.DB_PASSWORD || "67sixSeven",
-    database: process.env.DB_NAME || "finance_db",
-    port: process.env.DB_PORT || 3306,
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    port: process.env.DB_PORT,
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
@@ -468,6 +468,10 @@ app.get("/overview/filter/:month", (req, res) => {
             });
         });
     });
+});
+
+app.get('/', (req, res) => {
+  res.send('Server is up and running!');
 });
 
 // START SERVER
