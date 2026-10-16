@@ -32,10 +32,10 @@ async function fetchExpenses() {
 
     if (result.status !== "success") return;
 
-    const data = result.data; // Ito ay object gaya ng { Rent: 100, Food: 200, ... }
+    const data = result.data;
     const categories = ["Rent", "Food", "Transport", "Shopping", "Bills", "Entertainment"];
     
-    // I-map ang values mula sa object
+    // I-map yung values mula sa object
     const amounts = categories.map(cat => parseFloat(data[cat] || 0));
 
     // Update donut chart total

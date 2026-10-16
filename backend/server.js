@@ -17,13 +17,14 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 const db = mysql.createPool({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "finance_db",
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
+    host: process.env.DB_HOST || "mysql-xxxxx.aivencloud.com",
+    user: process.env.DB_USER || "avnadmin",
+    password: process.env.DB_PASSWORD || "67sixSeven",
+    database: process.env.DB_NAME || "finance_db",
+    port: process.env.DB_PORT || 3306,
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
 });
 
 // DASHBOARD TOTALS
@@ -186,7 +187,6 @@ app.post("/login", async (req, res) => {
       user_id: user.id,
       display_name: user.display_name
     });
-
   });
 });
 

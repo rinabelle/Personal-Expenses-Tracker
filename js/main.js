@@ -29,8 +29,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     // 2. Personalization
     const username = localStorage.getItem("display_name"); 
     const userEl = document.getElementById("display-username");
-    if (userEl && username) userEl.textContent = username;
-      
+
+    if (userEl) {
+    if (username && username !== "undefined" && username !== "null") {
+        userEl.textContent = username;
+        } else {
+        userEl.textContent = "Guest";
+        }
+    }
+        
     // 3. UI Setup
     setCurrentDate(); 
     setupAllModals();
@@ -493,7 +500,6 @@ function filterDashboard() {
     const selectedMonth = monthSelect.value;
     console.log("DEBUG: Changing to month:", selectedMonth);
 
-   // fetchDashboardTotals(selectedMonth); 
     filterByMonth(selectedMonth);
     updateMonthlyOverview(selectedMonth);
 }
